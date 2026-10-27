@@ -12,12 +12,12 @@ enum SendError: LocalizedError {
     }
 }
 
-/// Delivers a capture to Notion or email. Both are placeholders until phases 3 and 4.
+/// Delivers a capture to Notion or email. Email is a placeholder until phase 4.
 enum Sender {
     static func send(_ capture: Capture, to destination: Destination) async throws {
         switch destination {
         case .notion:
-            throw SendError.notConnected(.notion)
+            try await NotionClient.addPage(for: capture)
         case .email:
             guard AppSettings.emailAddress != nil else { throw SendError.noEmailAddress }
             throw SendError.notConnected(.email)

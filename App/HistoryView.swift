@@ -97,18 +97,23 @@ struct StatusBadge: View {
     var body: some View {
         switch capture.status {
         case .sent:
-            Label(capture.destination.rawValue, systemImage: capture.destination.systemImage)
-                .labelStyle(.titleAndIcon)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
-                .background(Color.secondary.opacity(0.12), in: Capsule())
+            pill(capture.destination.rawValue, systemImage: capture.destination.systemImage, tint: .secondary)
         case .failed:
-            Label("\(capture.destination.rawValue) not sent", systemImage: "exclamationmark.circle.fill")
-                .foregroundStyle(.red)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
-                .background(Color.red.opacity(0.12), in: Capsule())
+            pill("\(capture.destination.rawValue) not sent", systemImage: "exclamationmark.circle.fill", tint: .red)
         }
+    }
+
+    private func pill(_ text: String, systemImage: String, tint: Color) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: systemImage)
+            Text(text)
+        }
+        .lineLimit(1)
+        .fixedSize()
+        .foregroundStyle(tint)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 2)
+        .background(tint.opacity(0.12), in: Capsule())
     }
 }
 

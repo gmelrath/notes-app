@@ -1,0 +1,10 @@
+// Shared build settings for the app and the share card.
+// Private keys live in Secrets.xcconfig, which git ignores. Copy
+// Secrets.example.xcconfig to Secrets.xcconfig and fill it in.
+
+// "Things to Read…" in Notion.
+NOTION_DATA_SOURCE_ID = 2149ade9-f6b0-80d0-bbff-000bd727c4fb
+
+NOTION_TOKEN =
+
+#include? "Secrets.xcconfig"

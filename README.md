@@ -15,8 +15,8 @@
 |---|---|---|
 | 1 | Share card in the share sheet | Done |
 | 2 | On-phone history, duplicate warning, Settings | Done |
-| 3 | Send to Notion ("Things to Read…" database) | Next |
-| 4 | Send by email (with file attachments) | Planned |
+| 3 | Send to Notion ("Things to Read…" database) | Done |
+| 4 | Send by email (with file attachments) | Next |
 | 5 | Polish: app icon, design pass, real-world testing | Planned |
 
 ## Project layout
@@ -40,4 +40,19 @@ You need Xcode and an Apple ID. A free account works, but the app stops opening 
 4. Choose your iPhone as the run destination and press **▶ Run**.
 5. The first time, trust the developer on the phone: **Settings → General → VPN & Device Management**.
 
-API keys for Notion and email (phases 3 and 4) go in `Config/Secrets.xcconfig`, which git ignores.
+## Keys
+
+Private keys go in `Config/Secrets.xcconfig`, which git ignores. To create it, copy `Config/Secrets.example.xcconfig` and fill it in. Keys are built into the app, so rebuild after changing them.
+
+### Notion
+
+1. At [notion.so/profile/integrations](https://www.notion.so/profile/integrations), create an **internal** integration (API token) called Capture, and copy its secret into `NOTION_TOKEN`.
+2. In Notion, open the page that contains the database, then go to **••• → Connections** and add **Capture**.
+
+The target database is set by `NOTION_DATA_SOURCE_ID` in `Config/Capture.xcconfig`. Each capture becomes a row with:
+
+| Column | Value |
+|---|---|
+| Title | The page title, as edited on the card |
+| URL | The shared link |
+| Summary | The page's own description, if it has one |
