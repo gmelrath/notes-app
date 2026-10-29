@@ -45,7 +45,7 @@ struct CaptureDetailView: View {
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
-                    if capture.fileNames.isEmpty {
+                    if model.canRetry(capture) {
                         Button {
                             Task {
                                 isRetrying = true
@@ -63,7 +63,7 @@ struct CaptureDetailView: View {
                         }
                         .disabled(isRetrying)
                     } else {
-                        Text("Files aren't kept after a failed send. Share them again to retry.")
+                        Text("The shared files are no longer on this phone. Share them again to retry.")
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                     }

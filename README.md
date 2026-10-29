@@ -16,8 +16,8 @@
 | 1 | Share card in the share sheet | Done |
 | 2 | On-phone history, duplicate warning, Settings | Done |
 | 3 | Send to Notion ("Things to Read…" database) | Done |
-| 4 | Send by email (with file attachments) | Next |
-| 5 | Polish: app icon, design pass, real-world testing | Planned |
+| 4 | Send by email (with file attachments) | Done |
+| 5 | Polish: app icon, design pass, real-world testing | Next |
 
 ## Project layout
 
@@ -56,3 +56,12 @@ The target database is set by `NOTION_DATA_SOURCE_ID` in `Config/Capture.xcconfi
 | Title | The page title, as edited on the card |
 | URL | The shared link |
 | Summary | The page's own description, if it has one |
+
+### Email
+
+Email is sent through [Resend](https://resend.com).
+
+1. Sign up with the address you'll send captures to, and enter that address in the app's Settings. Resend's shared sender (`onboarding@resend.dev`) can only deliver to the account owner's address.
+2. Create an API key with **Sending access**, and copy it into `RESEND_API_KEY`.
+
+Each email uses the page title as its subject. The body has your note, the link, the page description and any shared text. Shared files are attached, up to 25 MB in total. If an email with files fails, copies of the files are kept on the phone so it can be retried from History. They're removed once it sends, or when you delete the entry.

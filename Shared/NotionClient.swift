@@ -26,7 +26,7 @@ enum NotionClient {
     private static let textLimit = 2000
 
     static func addPage(for capture: Capture) async throws {
-        guard let token = infoValue("NotionToken"), let dataSourceID = infoValue("NotionDataSourceID") else {
+        guard let token = Secrets.value("NotionToken"), let dataSourceID = Secrets.value("NotionDataSourceID") else {
             throw NotionError.missingKey
         }
 
@@ -72,12 +72,5 @@ enum NotionClient {
 
     private static func text(_ content: String) -> [String: Any] {
         ["text": ["content": String(content.prefix(textLimit))]]
-    }
-
-    /// A value from Info.plist, ignoring blanks and the example placeholder.
-    private static func infoValue(_ key: String) -> String? {
-        guard let value = Bundle.main.object(forInfoDictionaryKey: key) as? String else { return nil }
-        let trimmed = value.trimmingCharacters(in: .whitespaces)
-        return trimmed.isEmpty || trimmed.hasPrefix("paste-") ? nil : trimmed
     }
 }

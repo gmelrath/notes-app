@@ -6,5 +6,6 @@
 NOTION_DATA_SOURCE_ID = 2149ade9-f6b0-80d0-bbff-000bd727c4fb
 
 NOTION_TOKEN =
+RESEND_API_KEY =
 
 #include? "Secrets.xcconfig"

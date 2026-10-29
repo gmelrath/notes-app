@@ -34,11 +34,13 @@ final class ShareCardModel: ObservableObject {
         sending = destination
         errorMessage = nil
         var capture = makeCapture(for: destination)
+        let attachments = destination == .email ? item.files.map(\.fileURL) : []
 
         do {
-            try await Sender.send(capture, to: destination)
+            try await Sender.send(capture, to: destination, attachments: attachments)
             capture.status = .sent
             CaptureStore.save(capture)
+            AttachmentStore.remove(for: [captureID])
             sending = nil
             sent = destination
             try? await Task.sleep(for: .seconds(0.8))
@@ -47,6 +49,8 @@ final class ShareCardModel: ObservableObject {
             capture.status = .failed
             capture.errorMessage = error.localizedDescription
             CaptureStore.save(capture)
+            // The share sheet's copies vanish when the card closes; keep them so History can retry.
+            if !attachments.isEmpty { AttachmentStore.save(attachments, for: captureID) }
             sending = nil
             errorMessage = error.localizedDescription
         }
@@ -153,16 +157,18 @@ final class ShareCardModel: ObservableObject {
         return await withCheckedContinuation { continuation in
             _ = provider.loadFileRepresentation(forTypeIdentifier: type) { url, _ in
                 guard let url else { return continuation.resume(returning: nil) }
+                // Name the copy as the user sees it, since it becomes the email attachment's name.
+                let name = suggestedName.map { name in
+                    name.contains(".") || url.pathExtension.isEmpty ? name : "\(name).\(url.pathExtension)"
+                } ?? url.lastPathComponent
                 let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-                let destination = folder.appendingPathComponent(url.lastPathComponent)
+                let destination = folder.appendingPathComponent(name.replacingOccurrences(of: "/", with: "-"))
                 do {
                     try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
                     try FileManager.default.copyItem(at: url, to: destination)
                     let size = (try? destination.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
                     continuation.resume(returning: SharedFile(
-                        name: suggestedName.map { name in
-                            name.contains(".") ? name : "\(name).\(url.pathExtension)"
-                        } ?? url.lastPathComponent,
+                        name: name,
                         fileURL: destination,
                         byteCount: Int64(size)
                     ))
