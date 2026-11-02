@@ -9,6 +9,14 @@ extension Capture {
         }
     }
 
+    /// The warning shown when this link is shared again.
+    var duplicateMessage: String {
+        switch status {
+        case .sent: "Already sent to \(destination.rawValue) \(friendlyDate)."
+        case .failed: "You tried this \(friendlyDate), but it didn't send to \(destination.rawValue)."
+        }
+    }
+
     /// "today at 5:04 PM", "yesterday at 9:12 AM", or "Oct 12".
     var friendlyDate: String {
         let calendar = Calendar.current

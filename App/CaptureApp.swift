@@ -4,7 +4,27 @@ import SwiftUI
 struct CaptureApp: App {
     var body: some Scene {
         WindowGroup {
-            HistoryView()
+            NavigationStack {
+                ComposeView()
+                    .navigationTitle("Capture")
+                    .toolbar {
+                        ToolbarItemGroup(placement: .topBarTrailing) {
+                            NavigationLink {
+                                HistoryView()
+                            } label: {
+                                Image(systemName: "archivebox")
+                            }
+                            .accessibilityLabel("Sent")
+
+                            NavigationLink {
+                                SettingsView()
+                            } label: {
+                                Image(systemName: "gearshape")
+                            }
+                            .accessibilityLabel("Settings")
+                        }
+                    }
+            }
         }
     }
 }
