@@ -1,4 +1,5 @@
-import Foundation
+import UIKit
+import UniformTypeIdentifiers
 
 /// State for the screen the app opens on: write a note, optionally with a link, and send it.
 @MainActor
@@ -32,9 +33,43 @@ final class ComposeModel: ObservableObject {
     var canSend: Bool { hasContent && sending == nil && sent == nil }
     var canSendByEmail: Bool { canSend && hasEmailAddress }
 
-    func paste(_ strings: [String]) {
-        guard let text = strings.first else { return }
-        linkText = Self.link(in: text)?.absoluteString ?? text
+    /// Whether the clipboard holds a link or text. Checking this doesn't trigger iOS's "Allow Paste" prompt.
+    @Published private(set) var canPaste = false
+
+    func refreshPasteboard() {
+        canPaste = UIPasteboard.general.hasURLs || UIPasteboard.general.hasStrings
+    }
+
+    /// Apps copy links either as a URL or as plain text; accept whichever is there.
+    func paste(_ providers: [NSItemProvider]) async {
+        for provider in providers {
+            if let text = await Self.text(from: provider) {
+                linkText = Self.link(in: text)?.absoluteString ?? text
+                return
+            }
+        }
+    }
+
+    /// The clipboard item as text, preferring a web link. `loadObject` decodes the item the way the
+    /// copying app meant it; reading the raw type can hand back a temporary file instead.
+    private static func text(from provider: NSItemProvider) async -> String? {
+        if provider.canLoadObject(ofClass: URL.self),
+           let url = await load(URL.self, from: provider), !url.isFileURL {
+            return url.absoluteString
+        }
+        if provider.canLoadObject(ofClass: String.self) {
+            return await load(String.self, from: provider)
+        }
+        return nil
+    }
+
+    private static func load<T: _ObjectiveCBridgeable>(_ type: T.Type, from provider: NSItemProvider) async -> T?
+    where T._ObjectiveCType: NSItemProviderReading {
+        await withCheckedContinuation { continuation in
+            _ = provider.loadObject(ofClass: type) { object, _ in
+                continuation.resume(returning: object)
+            }
+        }
     }
 
     func clearLink() {

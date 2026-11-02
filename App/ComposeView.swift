@@ -4,6 +4,7 @@ import SwiftUI
 struct ComposeView: View {
     @StateObject private var model = ComposeModel()
     @FocusState private var focusedField: Field?
+    @Environment(\.scenePhase) private var scenePhase
 
     private enum Field { case link, title, note }
 
@@ -18,15 +19,24 @@ struct ComposeView: View {
                     Banner(text: previous.duplicateMessage, systemImage: "clock.arrow.circlepath", tint: .orange)
                 }
 
-                linkCard
                 noteCard
+                linkCard
             }
             .padding()
         }
         .scrollDismissesKeyboard(.interactively)
         .background(Color(.systemGroupedBackground))
         .safeAreaInset(edge: .bottom) { actions }
-        .onAppear { focusedField = .note }
+        .onAppear {
+            focusedField = .note
+            model.refreshPasteboard()
+        }
+        .onChange(of: scenePhase) {
+            if scenePhase == .active { model.refreshPasteboard() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIPasteboard.changedNotification)) { _ in
+            model.refreshPasteboard()
+        }
         .onChange(of: model.confirmation) {
             guard model.confirmation != nil else { return }
             focusedField = .note
@@ -47,17 +57,18 @@ struct ComposeView: View {
                     .textContentType(.URL)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
-                    .submitLabel(.next)
+                    .submitLabel(.done)
                     .focused($focusedField, equals: .link)
-                    .onSubmit { focusedField = .note }
-
+    
                 if model.linkText.isEmpty {
-                    PasteButton(payloadType: String.self) { strings in
-                        Task { @MainActor in model.paste(strings) }
+                    if model.canPaste {
+                        PasteButton(supportedContentTypes: [.url, .plainText]) { providers in
+                            Task { @MainActor in await model.paste(providers) }
+                        }
+                        .labelStyle(.titleOnly)
+                        .buttonBorderShape(.capsule)
+                        .controlSize(.small)
                     }
-                    .labelStyle(.titleOnly)
-                    .buttonBorderShape(.capsule)
-                    .controlSize(.small)
                 } else {
                     Button("Clear link", systemImage: "xmark.circle.fill", action: model.clearLink)
                         .labelStyle(.iconOnly)
@@ -76,7 +87,7 @@ struct ComposeView: View {
                     Text(summary)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
-                        .lineLimit(3)
+                        .lineLimit(1)
                 }
             }
         }
@@ -90,7 +101,8 @@ struct ComposeView: View {
             TextEditor(text: $model.note)
                 .focused($focusedField, equals: .note)
                 .scrollContentBackground(.hidden)
-                .frame(minHeight: model.url == nil ? 180 : 110)
+                // Sized so the note, link and send buttons all fit above the keyboard.
+                .frame(minHeight: model.url == nil ? 140 : 96)
                 .overlay(alignment: .topLeading) {
                     if model.note.isEmpty {
                         Text(model.url == nil ? "Write a note" : "Add a note")
