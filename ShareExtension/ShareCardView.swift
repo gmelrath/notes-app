@@ -16,14 +16,14 @@ struct ShareCardView: View {
                     ContentUnavailableView(
                         "Nothing to capture",
                         systemImage: "tray",
-                        description: Text("Capture couldn't read what was shared.")
+                        description: Text("Campfire couldn’t read what was shared.")
                     )
                 } else {
                     content
                 }
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("Capture")
+            .navigationTitle("Campfire")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

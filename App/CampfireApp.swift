@@ -1,12 +1,12 @@
 import SwiftUI
 
 @main
-struct CaptureApp: App {
+struct CampfireApp: App {
     var body: some Scene {
         WindowGroup {
             NavigationStack {
                 ComposeView()
-                    .navigationTitle("Capture")
+                    .navigationTitle("Campfire")
                     .toolbar {
                         ToolbarItemGroup(placement: .topBarTrailing) {
                             NavigationLink {

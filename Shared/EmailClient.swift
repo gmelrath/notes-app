@@ -26,7 +26,7 @@ enum EmailClient {
     }
 
     // Resend's shared sending address. It can only deliver to the Resend account's own email.
-    private static let from = "Capture <onboarding@resend.dev>"
+    private static let from = "Campfire <onboarding@resend.dev>"
     private static let attachmentLimit: Int64 = 25 * 1024 * 1024
 
     static func send(_ capture: Capture, to address: String, attachments: [URL]) async throws {
