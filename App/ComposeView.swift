@@ -11,25 +11,24 @@ struct ComposeView: View {
     private enum Field { case link, title, note }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                if let error = model.errorMessage {
-                    Banner(text: error, systemImage: "exclamationmark.triangle.fill", tint: .red)
-                } else if let confirmation = model.confirmation {
-                    Banner(text: confirmation, systemImage: "checkmark.circle.fill", tint: .green)
-                } else if let previous = model.previous {
-                    Banner(text: previous.duplicateMessage, systemImage: "clock.arrow.circlepath", tint: .orange)
-                }
-
-                noteCard
-                linkCard
+        Page(title: "Campfire") {
+            NavigationLink {
+                HistoryView()
+            } label: {
+                Image(systemName: "archivebox")
             }
-            .padding()
-            .readableWidth()
+            .accessibilityLabel("Sent")
+
+            NavigationLink {
+                SettingsView()
+            } label: {
+                Image(systemName: "gearshape")
+            }
+            .accessibilityLabel("Settings")
+        } content: {
+            form
         }
-        .scrollDismissesKeyboard(.interactively)
         .safeAreaInset(edge: .bottom) { actions }
-        .background(Color(.systemGroupedBackground))
         .onAppear {
             focusedField = .note
             model.refreshPasteboard()
@@ -48,6 +47,25 @@ struct ComposeView: View {
                 model.dismissConfirmation()
             }
         }
+    }
+
+    private var form: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                if let error = model.errorMessage {
+                    Banner(text: error, systemImage: "exclamationmark.triangle.fill", tint: .red)
+                } else if let confirmation = model.confirmation {
+                    Banner(text: confirmation, systemImage: "checkmark.circle.fill", tint: .green)
+                } else if let previous = model.previous {
+                    Banner(text: previous.duplicateMessage, systemImage: "clock.arrow.circlepath", tint: .orange)
+                }
+
+                noteCard
+                linkCard
+            }
+            .padding()
+        }
+        .scrollDismissesKeyboard(.interactively)
     }
 
     private var linkCard: some View {
@@ -135,8 +153,6 @@ struct ComposeView: View {
                 sendButton(.notion, enabled: model.canSend)
                 sendButton(.email, enabled: model.canSendByEmail)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
 
             if !model.hasEmailAddress {
                 Text("To send by email, add your address in Settings.")
@@ -146,7 +162,7 @@ struct ComposeView: View {
         }
         .padding()
         .readableWidth()
-        .background(.bar)
+        .background(Color(.systemGroupedBackground))
     }
 
     private func sendButton(_ destination: Destination, enabled: Bool) -> some View {
@@ -165,8 +181,8 @@ struct ComposeView: View {
             }
             .frame(maxWidth: .infinity)
         }
+        .buttonStyle(SendButtonStyle(tint: model.sent == destination ? .green : .campfireOrange))
         .disabled(!enabled && model.sent != destination)
-        .tint(model.sent == destination ? .green : nil)
         // For a hardware keyboard: ⌘↩ sends to Notion, ⇧⌘↩ by email.
         .keyboardShortcut(.return, modifiers: destination == .notion ? .command : [.command, .shift])
     }
