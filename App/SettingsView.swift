@@ -31,7 +31,14 @@ struct SettingsView: View {
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: email) {
+            // Skip when the change came from the other device, so it isn't sent straight back.
+            guard trimmedEmail != AppSettings.emailAddressDraft else { return }
             AppSettings.emailAddress = trimmedEmail.isEmpty ? nil : trimmedEmail
+        }
+        .onDisappear { Task { await syncHistory() } }
+        .onReceive(NotificationCenter.default.publisher(for: .historyDidChange)) { _ in
+            // The address may have been changed on the other device.
+            if !emailFocused { email = AppSettings.emailAddressDraft }
         }
     }
 }

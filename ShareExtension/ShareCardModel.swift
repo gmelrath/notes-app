@@ -43,7 +43,11 @@ final class ShareCardModel: ObservableObject {
             AttachmentStore.remove(for: [captureID])
             sending = nil
             sent = destination
+            // Upload while the "Sent" tick shows, so the other device knows about it straight away.
+            // If it can't finish, the app uploads it next time it opens.
+            async let upload = CloudHistory.shared.sync(includePull: false)
             try? await Task.sleep(for: .seconds(0.8))
+            _ = await upload
             close()
         } catch {
             capture.status = .failed
@@ -51,6 +55,7 @@ final class ShareCardModel: ObservableObject {
             CaptureStore.save(capture)
             // The share sheet's copies vanish when the card closes; keep them so History can retry.
             if !attachments.isEmpty { AttachmentStore.save(attachments, for: captureID) }
+            Task { await CloudHistory.shared.sync(includePull: false) }
             sending = nil
             errorMessage = error.localizedDescription
         }
@@ -109,6 +114,15 @@ final class ShareCardModel: ObservableObject {
         title = defaultTitle(for: result)
         previous = result.url.flatMap { CaptureStore.previous(matching: $0) }
         isLoading = false
+
+        // Another device may have sent this link since this one last synced.
+        if let url = result.url {
+            Task {
+                if await CloudHistory.shared.sync() {
+                    previous = CaptureStore.previous(matching: url, excluding: captureID)
+                }
+            }
+        }
 
         if let url = result.url {
             isFetchingTitle = true

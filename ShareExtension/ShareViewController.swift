@@ -9,6 +9,8 @@ final class ShareViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        // On iPad the card floats as a panel; this is its size there. iPhone ignores it.
+        preferredContentSize = CGSize(width: 540, height: 640)
 
         let host = UIHostingController(rootView: ShareCardView(model: model))
         addChild(host)
