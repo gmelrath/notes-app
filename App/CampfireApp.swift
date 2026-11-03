@@ -4,6 +4,7 @@ import SwiftUI
 struct CampfireApp: App {
     @UIApplicationDelegateAdaptor private var appDelegate: AppDelegate
     @Environment(\.scenePhase) private var scenePhase
+    @State private var isLandscape = false
 
     var body: some Scene {
         WindowGroup {
@@ -28,6 +29,9 @@ struct CampfireApp: App {
                         }
                     }
             }
+            // Measured on the whole window, which the keyboard doesn't resize; screens deeper in it shrink.
+            .onGeometryChange(for: Bool.self) { $0.size.width > $0.size.height } action: { isLandscape = $0 }
+            .environment(\.isLandscape, isLandscape)
             .onChange(of: scenePhase, initial: true) {
                 if scenePhase == .active { Task { await syncHistory() } }
             }
@@ -47,6 +51,11 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
                      fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
         Task { completionHandler(await syncHistory() ? .newData : .noData) }
     }
+}
+
+extension EnvironmentValues {
+    /// Whether the window is wider than it is tall.
+    @Entry var isLandscape = false
 }
 
 extension Notification.Name {

@@ -6,7 +6,7 @@ struct ComposeView: View {
     @FocusState private var focusedField: Field?
     @Environment(\.scenePhase) private var scenePhase
     /// iPad in landscape has little height once the keyboard is up.
-    @State private var isLandscape = false
+    @Environment(\.isLandscape) private var isLandscape
 
     private enum Field { case link, title, note }
 
@@ -28,9 +28,8 @@ struct ComposeView: View {
             .readableWidth()
         }
         .scrollDismissesKeyboard(.interactively)
-        .onGeometryChange(for: Bool.self) { $0.size.width > $0.size.height } action: { isLandscape = $0 }
-        .background(Color(.systemGroupedBackground))
         .safeAreaInset(edge: .bottom) { actions }
+        .background(Color(.systemGroupedBackground))
         .onAppear {
             focusedField = .note
             model.refreshPasteboard()
