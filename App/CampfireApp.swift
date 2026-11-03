@@ -10,24 +10,6 @@ struct CampfireApp: App {
         WindowGroup {
             NavigationStack {
                 ComposeView()
-                    .navigationTitle("Campfire")
-                    .toolbar {
-                        ToolbarItemGroup(placement: .topBarTrailing) {
-                            NavigationLink {
-                                HistoryView()
-                            } label: {
-                                Image(systemName: "archivebox")
-                            }
-                            .accessibilityLabel("Sent")
-
-                            NavigationLink {
-                                SettingsView()
-                            } label: {
-                                Image(systemName: "gearshape")
-                            }
-                            .accessibilityLabel("Settings")
-                        }
-                    }
             }
             // Measured on the whole window, which the keyboard doesn't resize; screens deeper in it shrink.
             .onGeometryChange(for: Bool.self) { $0.size.width > $0.size.height } action: { isLandscape = $0 }

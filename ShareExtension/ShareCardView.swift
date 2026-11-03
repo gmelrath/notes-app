@@ -120,8 +120,6 @@ struct ShareCardView: View {
                 sendButton(.notion, enabled: model.canSendToNotion)
                 sendButton(.email, enabled: model.canSendByEmail)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
 
             if !model.hasEmailAddress {
                 Text("To send by email, add your address in the Campfire app’s Settings.")
@@ -132,7 +130,7 @@ struct ShareCardView: View {
         }
         .padding()
         .readableWidth()
-        .background(.bar)
+        .background(Color(.systemGroupedBackground))
     }
 
     private func sendButton(_ destination: Destination, enabled: Bool) -> some View {
@@ -151,8 +149,8 @@ struct ShareCardView: View {
             }
             .frame(maxWidth: .infinity)
         }
+        .buttonStyle(SendButtonStyle(tint: model.sent == destination ? .green : .campfireOrange))
         .disabled(!enabled && model.sent != destination)
-        .tint(model.sent == destination ? .green : nil)
         .keyboardShortcut(.return, modifiers: destination == .notion ? .command : [.command, .shift])
     }
 }

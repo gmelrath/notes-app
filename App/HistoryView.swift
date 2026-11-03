@@ -16,14 +16,15 @@ struct HistoryView: View {
     }
 
     var body: some View {
-        Group {
+        Page("Sent", showsBack: true) {
             if model.captures.isEmpty {
                 EmptyHistoryView()
             } else {
+                SearchField(text: $searchText, prompt: "Search captures")
+                    .padding([.horizontal, .top])
                 list
             }
         }
-        .navigationTitle("Sent")
         .navigationDestination(for: Capture.self) { capture in
             CaptureDetailView(capture: capture, model: model)
         }
@@ -46,8 +47,7 @@ struct HistoryView: View {
                 model.delete(Set(offsets.map { filtered[$0].id }))
             }
         }
-        .listStyle(.plain)
-        .searchable(text: $searchText, prompt: "Search captures")
+        .pageList()
         .overlay {
             if filtered.isEmpty {
                 ContentUnavailableView.search(text: searchText)
@@ -124,6 +124,7 @@ struct EmptyHistoryView: View {
                 Text("Everything you capture will be listed here.")
             }
         }
+        .pageList()
     }
 
     private func step(_ number: Int, _ text: LocalizedStringKey) -> some View {
@@ -135,5 +136,30 @@ struct EmptyHistoryView: View {
                 .background(Circle().fill(.tint))
             Text(text)
         }
+    }
+}
+
+/// A search box drawn in the page, since the screens have no navigation bar to hold one.
+struct SearchField: View {
+    @Binding var text: String
+    let prompt: String
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+            TextField(prompt, text: $text)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .submitLabel(.search)
+            if !text.isEmpty {
+                Button("Clear search", systemImage: "xmark.circle.fill") { text = "" }
+                    .labelStyle(.iconOnly)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(.background, in: RoundedRectangle(cornerRadius: 12))
     }
 }
