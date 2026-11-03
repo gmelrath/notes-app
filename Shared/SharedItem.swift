@@ -22,6 +22,7 @@ struct SharedFile: Identifiable {
 
 /// The App Group lets the share card and the main app read the same storage.
 enum AppGroup {
+    // Still named for Capture, the app's original name: changing it would orphan the history already on the phone.
     static let id = "group.com.gregmelrath.Capture"
     static var defaults: UserDefaults { UserDefaults(suiteName: id) ?? .standard }
 }

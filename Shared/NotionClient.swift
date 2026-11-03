@@ -1,7 +1,7 @@
 import Foundation
 
 /// Adds a row to the "Things to Read…" database using Notion's API.
-/// The key and database come from Config/Capture.xcconfig via each target's Info.plist.
+/// The key and database come from Config/Campfire.xcconfig via each target's Info.plist.
 enum NotionClient {
     enum NotionError: LocalizedError {
         case missingKey
@@ -14,7 +14,7 @@ enum NotionClient {
             switch self {
             case .missingKey: "Notion isn't set up yet. Add your Notion key to Config/Secrets.xcconfig."
             case .unauthorized: "Notion didn't accept the key. Check Config/Secrets.xcconfig."
-            case .databaseNotShared: "Capture can't see your Notion database. In Notion, add the Capture connection to Things to Read…"
+            case .databaseNotShared: "Campfire can’t see your Notion database. In Notion, add the Campfire connection to Things to Read…"
             case .offline: "No internet connection. Try again when you're back online."
             case .rejected(let message): "Notion said: \(message)"
             }

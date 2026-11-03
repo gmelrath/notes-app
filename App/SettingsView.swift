@@ -24,7 +24,7 @@ struct SettingsView: View {
                     Text("That doesn't look like an email address.")
                         .foregroundStyle(.red)
                 } else {
-                    Text("Captures you send by email go to this address.")
+                    Text("Links and notes you send by email go to this address.")
                 }
             }
         }
