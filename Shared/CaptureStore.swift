@@ -21,10 +21,37 @@ enum CaptureStore {
             captures.removeAll { $0.id == capture.id }
             captures.insert(capture, at: 0)
         }
+        CloudQueue.markSaved([capture.id])
     }
 
     static func delete(ids: Set<Capture.ID>) {
         update { captures in captures.removeAll { ids.contains($0.id) } }
+        CloudQueue.markDeleted(ids)
+    }
+
+    /// Applies changes from other devices. Entries with local changes still waiting to upload are
+    /// left alone, so they aren't overwritten by an older copy. Returns whether anything changed.
+    static func merge(saved: [Capture], deleted: Set<Capture.ID>, keeping pending: Set<Capture.ID>) -> Bool {
+        guard !saved.isEmpty || !deleted.isEmpty else { return false }
+        var changed = false
+        update { captures in
+            for capture in saved where !pending.contains(capture.id) {
+                if let index = captures.firstIndex(where: { $0.id == capture.id }) {
+                    if captures[index] != capture {
+                        captures[index] = capture
+                        changed = true
+                    }
+                } else {
+                    captures.append(capture)
+                    changed = true
+                }
+            }
+            let countBefore = captures.count
+            captures.removeAll { deleted.contains($0.id) && !pending.contains($0.id) }
+            if captures.count != countBefore { changed = true }
+        }
+        AttachmentStore.remove(for: deleted.subtracting(pending))
+        return changed
     }
 
     /// The most recent earlier capture of the same link, if there is one.
@@ -60,13 +87,13 @@ enum CaptureStore {
         }
     }
 
-    private static let encoder: JSONEncoder = {
+    static let encoder: JSONEncoder = {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         return encoder
     }()
 
-    private static let decoder: JSONDecoder = {
+    static let decoder: JSONDecoder = {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         return decoder

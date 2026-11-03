@@ -87,6 +87,7 @@ final class ComposeModel: ObservableObject {
             try await Sender.send(capture, to: destination)
             capture.status = .sent
             CaptureStore.save(capture)
+            Task { await syncHistory() }
             sending = nil
             sent = destination
             try? await Task.sleep(for: .seconds(0.8))
@@ -96,6 +97,7 @@ final class ComposeModel: ObservableObject {
             capture.status = .failed
             capture.errorMessage = error.localizedDescription
             CaptureStore.save(capture)
+            Task { await syncHistory() }
             sending = nil
             errorMessage = error.localizedDescription
         }

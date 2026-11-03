@@ -27,21 +27,40 @@ enum AppGroup {
     static var defaults: UserDefaults { UserDefaults(suiteName: id) ?? .standard }
 }
 
-/// User settings, stored in the App Group so the share card can read them.
+/// User settings. Kept in iCloud so iPhone and iPad match, with a copy in the App Group
+/// for when iCloud isn't available.
 enum AppSettings {
     private static let emailKey = "emailAddress"
+    private static var cloud: NSUbiquitousKeyValueStore { .default }
 
     static var emailAddress: String? {
         get {
-            let value = AppGroup.defaults.string(forKey: emailKey)?.trimmingCharacters(in: .whitespaces)
-            return value.flatMap { isValidEmail($0) ? $0 : nil }
+            let value = emailAddressDraft.trimmingCharacters(in: .whitespaces)
+            return isValidEmail(value) ? value : nil
         }
-        set { AppGroup.defaults.set(newValue, forKey: emailKey) }
+        set {
+            AppGroup.defaults.set(newValue, forKey: emailKey)
+            if let newValue { cloud.set(newValue, forKey: emailKey) } else { cloud.removeObject(forKey: emailKey) }
+        }
     }
 
     /// The raw text typed in Settings, valid or not.
     static var emailAddressDraft: String {
-        AppGroup.defaults.string(forKey: emailKey) ?? ""
+        cloud.string(forKey: emailKey) ?? AppGroup.defaults.string(forKey: emailKey) ?? ""
+    }
+
+    /// Called at launch: copies an address set before iCloud sync existed up to iCloud,
+    /// and keeps the local copy in step with changes made on other devices.
+    static func startSyncing() {
+        cloud.synchronize()
+        if cloud.string(forKey: emailKey) == nil, let local = AppGroup.defaults.string(forKey: emailKey) {
+            cloud.set(local, forKey: emailKey)
+        }
+        NotificationCenter.default.addObserver(
+            forName: NSUbiquitousKeyValueStore.didChangeExternallyNotification, object: cloud, queue: .main
+        ) { _ in
+            AppGroup.defaults.set(cloud.string(forKey: emailKey), forKey: emailKey)
+        }
     }
 
     static func isValidEmail(_ text: String) -> Bool {

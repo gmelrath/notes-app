@@ -5,6 +5,8 @@ struct ComposeView: View {
     @StateObject private var model = ComposeModel()
     @FocusState private var focusedField: Field?
     @Environment(\.scenePhase) private var scenePhase
+    /// iPad in landscape has little height once the keyboard is up.
+    @State private var isLandscape = false
 
     private enum Field { case link, title, note }
 
@@ -23,8 +25,10 @@ struct ComposeView: View {
                 linkCard
             }
             .padding()
+            .readableWidth()
         }
         .scrollDismissesKeyboard(.interactively)
+        .onGeometryChange(for: Bool.self) { $0.size.width > $0.size.height } action: { isLandscape = $0 }
         .background(Color(.systemGroupedBackground))
         .safeAreaInset(edge: .bottom) { actions }
         .onAppear {
@@ -102,7 +106,7 @@ struct ComposeView: View {
                 .focused($focusedField, equals: .note)
                 .scrollContentBackground(.hidden)
                 // Sized so the note, link and send buttons all fit above the keyboard.
-                .frame(minHeight: model.url == nil ? 140 : 96)
+                .frame(minHeight: isLandscape ? 56 : model.url == nil ? 140 : 96)
                 .overlay(alignment: .topLeading) {
                     if model.note.isEmpty {
                         Text(model.url == nil ? "Write a note" : "Add a note")
@@ -115,12 +119,14 @@ struct ComposeView: View {
                 .padding(10)
                 .background(.background, in: RoundedRectangle(cornerRadius: 12))
 
-            Text(model.url == nil
-                 ? "The first line becomes the title."
-                 : "In Notion, your note replaces the page's description.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 4)
+            if !isLandscape {
+                Text(model.url == nil
+                     ? "The first line becomes the title."
+                     : "In Notion, your note replaces the page's description.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 4)
+            }
         }
     }
 
@@ -140,6 +146,7 @@ struct ComposeView: View {
             }
         }
         .padding()
+        .readableWidth()
         .background(.bar)
     }
 
@@ -161,5 +168,7 @@ struct ComposeView: View {
         }
         .disabled(!enabled && model.sent != destination)
         .tint(model.sent == destination ? .green : nil)
+        // For a hardware keyboard: ⌘↩ sends to Notion, ⇧⌘↩ by email.
+        .keyboardShortcut(.return, modifiers: destination == .notion ? .command : [.command, .shift])
     }
 }

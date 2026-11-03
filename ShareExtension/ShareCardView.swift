@@ -49,6 +49,7 @@ struct ShareCardView: View {
                 note
             }
             .padding()
+            .readableWidth()
         }
         .scrollDismissesKeyboard(.interactively)
     }
@@ -123,13 +124,14 @@ struct ShareCardView: View {
             .controlSize(.large)
 
             if !model.hasEmailAddress {
-                Text("To send by email, add your address in the Capture app's Settings.")
+                Text("To send by email, add your address in the Campfire app’s Settings.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
         }
         .padding()
+        .readableWidth()
         .background(.bar)
     }
 
@@ -151,5 +153,6 @@ struct ShareCardView: View {
         }
         .disabled(!enabled && model.sent != destination)
         .tint(model.sent == destination ? .green : nil)
+        .keyboardShortcut(.return, modifiers: destination == .notion ? .command : [.command, .shift])
     }
 }

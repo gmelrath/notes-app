@@ -30,6 +30,9 @@ struct HistoryView: View {
         .onChange(of: scenePhase, initial: true) {
             if scenePhase == .active { model.reload() }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .historyDidChange)) { _ in
+            model.reload()
+        }
     }
 
     private var list: some View {
@@ -50,7 +53,10 @@ struct HistoryView: View {
                 ContentUnavailableView.search(text: searchText)
             }
         }
-        .refreshable { model.reload() }
+        .refreshable {
+            await syncHistory()
+            model.reload()
+        }
     }
 }
 
@@ -111,9 +117,9 @@ struct EmptyHistoryView: View {
             Section {
                 step(1, "Tap **Share** in Safari, X, LinkedIn or any app.")
                 step(2, "Scroll the row of apps and tap **More**.")
-                step(3, "Turn on **Capture** and drag it near the top.")
+                step(3, "Turn on **Campfire** and drag it near the top.")
             } header: {
-                Text("Add Capture to your share sheet")
+                Text("Add Campfire to your share sheet")
             } footer: {
                 Text("Everything you capture will be listed here.")
             }

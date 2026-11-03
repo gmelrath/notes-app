@@ -18,3 +18,10 @@ struct Banner: View {
         .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
     }
 }
+
+extension View {
+    /// Keeps content at a comfortable width on iPad, centred, instead of stretching edge to edge.
+    func readableWidth() -> some View {
+        frame(maxWidth: 640).frame(maxWidth: .infinity)
+    }
+}

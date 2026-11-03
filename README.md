@@ -1,14 +1,15 @@
 # notes-app
 
-**Campfire** is a personal iPhone app for saving links, notes and files from the share sheet. Share a post or article, then send it to a Notion reading list or to your email inbox. Every capture is logged on the phone, so you can see whether you've already saved something.
+**Campfire** is a personal iPhone and iPad app for saving links, notes and files from the share sheet. Share a post or article, then send it to a Notion reading list or to your email inbox. Every capture is logged and synced between your devices through iCloud, so you can see whether you've already saved something.
 
 ## What it does
 
 - **Share card:** tap Share in any app (Safari, X, LinkedIn…), then **Campfire**. The card shows the page title (editable), an optional note, and **Notion** / **Email** buttons.
-- **Duplicate warning:** if you've captured a link before, the card says when and where it went. Tracking codes like `utm_*` are ignored when comparing links.
+- **Duplicate warning:** if you've captured a link before, on either device, the card says when and where it went. Tracking codes like `utm_*` are ignored when comparing links.
 - **Write a note:** the app opens on a compose screen. Type a note, and optionally add a link with **Paste**, then send it to Notion or email. Without a link, the note's first line becomes the title.
 - **Sent:** the archive-box button lists every capture with search, a detail view, swipe to delete, and retry for failed sends.
-- **Settings:** the gear button sets the email address that captures are sent to.
+- **Settings:** the gear button sets the email address that captures are sent to. It syncs between devices.
+- **iPad:** works in any orientation and with Split View. With a hardware keyboard, ⌘↩ sends to Notion and ⇧⌘↩ sends by email.
 
 ## Status
 
@@ -19,19 +20,28 @@
 | 3 | Send to Notion ("Things to Read…" database) | Done |
 | 4 | Send by email (with file attachments) | Done |
 | 5 | Paid developer account, renamed to Campfire | Done |
-| 6 | iPad support, history shared between devices through iCloud | Next |
-| 7 | Polish: app icon, design pass, real-world testing | |
+| 6 | iPad support, history shared between devices through iCloud | Done |
+| 7 | Polish: app icon, design pass, real-world testing | Next |
 
 ## Project layout
 
 ```
 App/             Main app: history, detail and settings screens
 ShareExtension/  The share card
-Shared/          Code used by both: capture model, history store, link metadata, sending
+Shared/          Code used by both: capture model, history store, iCloud sync, link metadata, sending
 Config/          Info.plist and entitlements
 ```
 
 The app and the share card share storage through the App Group `group.com.gregmelrath.Capture`. The app was first called Capture, and its bundle IDs and App Group keep that name so the history already on the phone carries over.
+
+## iCloud sync
+
+The history is mirrored to the private iCloud database of the container `iCloud.com.gregmelrath.Campfire`, in a zone called History, one `Capture` record per entry. Each record stores the entry as JSON, so adding fields needs no iCloud schema change.
+
+- Each device keeps its own copy in `captures.json`, so the app and share card work offline. Changes queue up and upload when there's a connection.
+- The app syncs when it opens, after sending or deleting, and when iCloud signals that another device changed something. The share card syncs when it opens, so its duplicate warning includes links sent from the other device.
+- The email address in Settings syncs through iCloud key-value storage.
+- Builds installed from Xcode use iCloud's **Development** environment. Before distributing through TestFlight, deploy the schema to Production in the [CloudKit Console](https://icloud.developer.apple.com).
 
 ## Build and install
 
