@@ -7,8 +7,6 @@ struct CaptureApp: App {
             NavigationStack {
                 ComposeView()
                     .navigationTitle("Capture")
-                    // A compact title leaves room for the note, link and buttons above the keyboard.
-                    .navigationBarTitleDisplayMode(.inline)
                     .toolbar {
                         ToolbarItemGroup(placement: .topBarTrailing) {
                             NavigationLink {
