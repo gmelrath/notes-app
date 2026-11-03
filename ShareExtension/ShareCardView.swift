@@ -40,9 +40,9 @@ struct ShareCardView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 if let error = model.errorMessage {
-                    banner(error, systemImage: "exclamationmark.triangle.fill", tint: .red)
+                    Banner(text: error, systemImage: "exclamationmark.triangle.fill", tint: .red)
                 } else if let previous = model.previous {
-                    banner(duplicateMessage(for: previous), systemImage: "clock.arrow.circlepath", tint: .orange)
+                    Banner(text: previous.duplicateMessage, systemImage: "clock.arrow.circlepath", tint: .orange)
                 }
 
                 preview
@@ -111,25 +111,6 @@ struct ShareCardView: View {
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 4)
         }
-    }
-
-    private func duplicateMessage(for previous: Capture) -> String {
-        switch previous.status {
-        case .sent: "Already sent to \(previous.destination.rawValue) \(previous.friendlyDate)."
-        case .failed: "You tried this \(previous.friendlyDate), but it didn't send to \(previous.destination.rawValue)."
-        }
-    }
-
-    private func banner(_ text: String, systemImage: String, tint: Color) -> some View {
-        Label {
-            Text(text).foregroundStyle(.primary)
-        } icon: {
-            Image(systemName: systemImage).foregroundStyle(tint)
-        }
-        .font(.subheadline)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
     }
 
     private var actions: some View {

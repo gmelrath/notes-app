@@ -6,8 +6,9 @@
 
 - **Share card:** tap Share in any app (Safari, X, LinkedIn…), then **Capture**. The card shows the page title (editable), an optional note, and **Notion** / **Email** buttons.
 - **Duplicate warning:** if you've captured a link before, the card says when and where it went. Tracking codes like `utm_*` are ignored when comparing links.
-- **History:** the app lists every capture with search, a detail view, swipe to delete, and retry for failed sends.
-- **Settings:** the email address that captures are sent to.
+- **Write a note:** the app opens on a compose screen. Type a note, and optionally add a link with **Paste**, then send it to Notion or email. Without a link, the note's first line becomes the title.
+- **Sent:** the archive-box button lists every capture with search, a detail view, swipe to delete, and retry for failed sends.
+- **Settings:** the gear button sets the email address that captures are sent to.
 
 ## Status
 
@@ -56,6 +57,8 @@ The target database is set by `NOTION_DATA_SOURCE_ID` in `Config/Capture.xcconfi
 | Title | The page title, as edited on the card |
 | URL | The shared link |
 | Summary | The page's own description, if it has one |
+
+Notes written in the app follow slightly different rules. With a link, your note goes in Summary instead of the page's description. Without a link, the note's first line is the Title, the rest is the Summary, and URL is left empty.
 
 ### Email
 

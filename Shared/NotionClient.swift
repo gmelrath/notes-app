@@ -36,7 +36,9 @@ enum NotionClient {
         if let url = capture.url {
             properties["URL"] = ["url": url.absoluteString]
         }
-        if let summary = capture.summary, !summary.isEmpty {
+        // A note only reaches Notion when it was written in the app, and then it beats the page's description.
+        // (The share card keeps its note for email, so it never sets one on Notion captures.)
+        if let summary = [capture.note, capture.summary].compactMap({ $0 }).first(where: { !$0.isEmpty }) {
             properties["Summary"] = ["rich_text": [text(summary)]]
         }
         let body: [String: Any] = [

@@ -16,28 +16,16 @@ struct HistoryView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if model.captures.isEmpty {
-                    EmptyHistoryView()
-                } else {
-                    list
-                }
+        Group {
+            if model.captures.isEmpty {
+                EmptyHistoryView()
+            } else {
+                list
             }
-            .navigationTitle("Capture")
-            .navigationDestination(for: Capture.self) { capture in
-                CaptureDetailView(capture: capture, model: model)
-            }
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink {
-                        SettingsView()
-                    } label: {
-                        Image(systemName: "gearshape")
-                    }
-                    .accessibilityLabel("Settings")
-                }
-            }
+        }
+        .navigationTitle("Sent")
+        .navigationDestination(for: Capture.self) { capture in
+            CaptureDetailView(capture: capture, model: model)
         }
         .onChange(of: scenePhase, initial: true) {
             if scenePhase == .active { model.reload() }
@@ -79,8 +67,8 @@ struct CaptureRow: View {
                 StatusBadge(capture: capture)
                 if let host = capture.host {
                     Text(host).lineLimit(1)
+                    Text("·")
                 }
-                Text("·")
                 Text(capture.friendlyDate)
             }
             .font(.caption)
