@@ -21,7 +21,7 @@
 | 4 | Send by email (with file attachments) | Done |
 | 5 | Paid developer account, renamed to Campfire | Done |
 | 6 | iPad support, history shared between devices through iCloud | Done |
-| 7 | Polish: app icon, design pass, real-world testing | Next |
+| 7 | App icon and accent colour; real-world testing continues | Done |
 
 ## Project layout
 
@@ -30,9 +30,16 @@ App/             Main app: history, detail and settings screens
 ShareExtension/  The share card
 Shared/          Code used by both: capture model, history store, iCloud sync, link metadata, sending
 Config/          Info.plist and entitlements
+Design/          Source artwork for the app icon, and the script that prepares it
 ```
 
 The app and the share card share storage through the App Group `group.com.gregmelrath.Capture`. The app was first called Capture, and its bundle IDs and App Group keep that name so the history already on the phone carries over.
+
+## App icon
+
+The icon artwork is `Design/icon-source.png`. To change it, replace that file and run `swift Design/make-icon.swift` from the repo root. The script resizes it to 1024 × 1024 on a white background and writes it to `Shared/Assets.xcassets/AppIcon.appiconset`. iOS makes the dark and tinted Home Screen versions itself.
+
+Buttons and links use the `AccentColor` in the same asset catalog, an ember orange taken from the icon.
 
 ## iCloud sync
 
