@@ -37,7 +37,6 @@ struct CampfireApp: App {
 
 final class AppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
-        AppSettings.startSyncing()
         // iCloud's change notifications arrive silently; no permission prompt is needed.
         application.registerForRemoteNotifications()
         return true

@@ -63,6 +63,7 @@ actor CloudHistory {
     }
 
     private func upload() async throws {
+        try await uploadSettings()
         let startedAt = Date()
         let saves = CloudQueue.saves
         let deletes = CloudQueue.deletes
@@ -101,6 +102,7 @@ actor CloudHistory {
         var token = loadToken()
         var saved: [Capture] = []
         var deleted = Set<Capture.ID>()
+        var settings: CKRecord?
         var moreComing = true
 
         while moreComing {
@@ -117,10 +119,14 @@ actor CloudHistory {
                 token = nil
                 saved = []
                 deleted = []
+                settings = nil
                 continue
             }
             for result in changes.modificationResultsByID.values {
-                if case .success(let modification) = result, let capture = capture(from: modification.record) {
+                guard case .success(let modification) = result else { continue }
+                if modification.record.recordType == Self.settingsType {
+                    settings = modification.record
+                } else if let capture = capture(from: modification.record) {
                     saved.append(capture)
                 }
             }
@@ -131,7 +137,10 @@ actor CloudHistory {
             moreComing = changes.moreComing
         }
 
-        let changed = CaptureStore.merge(saved: saved, deleted: deleted, keeping: CloudQueue.pendingIDs)
+        var changed = CaptureStore.merge(saved: saved, deleted: deleted, keeping: CloudQueue.pendingIDs)
+        if let settings, let changedAt = settings["changedAt"] as? Date {
+            changed = AppSettings.applyFromCloud(email: settings["email"] as? String, changedAt: changedAt) || changed
+        }
         saveToken(token)
         return changed
     }
@@ -173,7 +182,7 @@ actor CloudHistory {
     }
 
     private func capture(from record: CKRecord) -> Capture? {
-        guard let data = record["payload"] as? Data else { return nil }
+        guard record.recordType == "Capture", let data = record["payload"] as? Data else { return nil }
         return try? CaptureStore.decoder.decode(Capture.self, from: data)
     }
 
@@ -188,6 +197,24 @@ actor CloudHistory {
     private func saveToken(_ token: CKServerChangeToken?) {
         let data = token.flatMap { try? NSKeyedArchiver.archivedData(withRootObject: $0, requiringSecureCoding: true) }
         AppGroup.defaults.set(data, forKey: tokenKey)
+    }
+
+    // MARK: - Settings
+
+    /// Settings travel as one record in the same zone, so they sync as quickly as the history.
+    private static let settingsType = "Settings"
+
+    private func uploadSettings() async throws {
+        guard let pending = AppSettings.pendingUpload else { return }
+        let record = CKRecord(recordType: Self.settingsType, recordID: CKRecord.ID(recordName: "settings", zoneID: zoneID))
+        record["email"] = pending.email as NSString?
+        record["changedAt"] = pending.changedAt as NSDate
+        let results = try await withDatabase { database in
+            try await database.modifyRecords(saving: [record], deleting: [], savePolicy: .allKeys, atomically: false)
+        }
+        if case .success = results.saveResults[record.recordID] {
+            AppSettings.markUploaded(changedAt: pending.changedAt)
+        }
     }
 
     private enum Keys {

@@ -40,7 +40,7 @@ The history is mirrored to the private iCloud database of the container `iCloud.
 
 - Each device keeps its own copy in `captures.json`, so the app and share card work offline. Changes queue up and upload when there's a connection.
 - The app syncs when it opens, after sending or deleting, and when iCloud signals that another device changed something. The share card syncs when it opens, so its duplicate warning includes links sent from the other device.
-- The email address in Settings syncs through iCloud key-value storage.
+- The email address in Settings syncs as a `Settings` record in the same zone. The most recent change wins.
 - Builds installed from Xcode use iCloud's **Development** environment. Before distributing through TestFlight, deploy the schema to Production in the [CloudKit Console](https://icloud.developer.apple.com).
 
 ## Build and install
