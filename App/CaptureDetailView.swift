@@ -96,7 +96,7 @@ struct CaptureDetailView: View {
                     confirmDelete = true
                 }
             } footer: {
-                Text("This only removes it from this phone. Anything already in Notion or your inbox stays there.")
+                Text("This removes it from Campfire on all your devices. Anything already in Notion or your inbox stays there.")
             }
         }
         .navigationBarTitleDisplayMode(.inline)
