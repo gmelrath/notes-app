@@ -101,6 +101,7 @@ actor CloudHistory {
     private func fetchChanges() async throws -> Bool {
         var token = loadToken()
         var saved: [Capture] = []
+        var unreadable: [Data] = []
         var deleted = Set<Capture.ID>()
         var settings: CKRecord?
         var moreComing = true
@@ -118,6 +119,7 @@ actor CloudHistory {
                 // Too long since the last sync: start again from the beginning.
                 token = nil
                 saved = []
+                unreadable = []
                 deleted = []
                 settings = nil
                 continue
@@ -128,6 +130,9 @@ actor CloudHistory {
                     settings = modification.record
                 } else if let capture = capture(from: modification.record) {
                     saved.append(capture)
+                } else if let payload = modification.record["payload"] as? Data {
+                    // Saved by a newer version of Campfire: kept in the file for when this one is updated.
+                    unreadable.append(payload)
                 }
             }
             for deletion in changes.deletions {
@@ -137,7 +142,7 @@ actor CloudHistory {
             moreComing = changes.moreComing
         }
 
-        var changed = CaptureStore.merge(saved: saved, deleted: deleted, keeping: CloudQueue.pendingIDs)
+        var changed = CaptureStore.merge(saved: saved, unreadable: unreadable, deleted: deleted, keeping: CloudQueue.pendingIDs)
         if let settings, let changedAt = settings["changedAt"] as? Date {
             changed = AppSettings.applyFromCloud(email: settings["email"] as? String, changedAt: changedAt) || changed
         }

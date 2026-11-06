@@ -64,3 +64,23 @@ struct Capture: Codable, Identifiable, Hashable {
         return host + path + (query.isEmpty ? "" : "?" + query)
     }
 }
+
+extension Capture {
+    /// Reads an entry saved by any version of Campfire. Only the ID and destination are required;
+    /// anything else missing gets a default. When adding a field, read it with `decodeIfPresent`
+    /// and a default here, so entries saved before it existed still load.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        destination = try container.decode(Destination.self, forKey: .destination)
+        date = try container.decodeIfPresent(Date.self, forKey: .date) ?? .distantPast
+        title = try container.decodeIfPresent(String.self, forKey: .title) ?? "Untitled"
+        url = try container.decodeIfPresent(URL.self, forKey: .url)
+        summary = try container.decodeIfPresent(String.self, forKey: .summary)
+        note = try container.decodeIfPresent(String.self, forKey: .note)
+        text = try container.decodeIfPresent(String.self, forKey: .text)
+        fileNames = try container.decodeIfPresent([String].self, forKey: .fileNames) ?? []
+        status = try container.decodeIfPresent(Status.self, forKey: .status) ?? .failed
+        errorMessage = try container.decodeIfPresent(String.self, forKey: .errorMessage)
+    }
+}
