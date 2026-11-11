@@ -32,7 +32,8 @@ struct LinkMetadata {
         let title = meta["og:title"] ?? meta["twitter:title"] ?? titleTag
         let description = meta["og:description"] ?? meta["twitter:description"] ?? meta["description"]
 
-        return LinkMetadata(title: title.map(clean), description: description.map(clean))
+        // Posts arrive with their paragraphs in the description; keep the line breaks.
+        return LinkMetadata(title: title.map { clean($0) }, description: description.map { clean($0, keepingLineBreaks: true) })
     }
 
     // MARK: - Helpers
@@ -62,8 +63,9 @@ struct LinkMetadata {
         return result
     }
 
-    /// Decodes common HTML entities and collapses whitespace.
-    private static func clean(_ raw: String) -> String {
+    /// Decodes common HTML entities and collapses whitespace, optionally keeping line breaks
+    /// (at most one blank line in a row).
+    private static func clean(_ raw: String, keepingLineBreaks: Bool = false) -> String {
         var text = raw
         let named = ["&amp;": "&", "&quot;": "\"", "&#39;": "'", "&apos;": "'", "&lt;": "<", "&gt;": ">", "&nbsp;": " "]
         for (entity, value) in named { text = text.replacingOccurrences(of: entity, with: value) }
@@ -79,9 +81,56 @@ struct LinkMetadata {
             }
         }
 
+        guard keepingLineBreaks else { return TitleText.flattened(text) }
         return text
-            .components(separatedBy: .whitespacesAndNewlines)
-            .filter { !$0.isEmpty }
-            .joined(separator: " ")
+            .components(separatedBy: .newlines)
+            .map(TitleText.flattened)
+            .joined(separator: "\n")
+            .replacingOccurrences(of: #"\n{3,}"#, with: "\n\n", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+}
+
+extension LinkMetadata {
+    /// Whether the link is a social post (LinkedIn, X, Threads and the like) rather than an article.
+    /// Posts have no real title: their "title" is the post's opening, cut short, and the description
+    /// is the post itself. A real headline, like a Medium article's, isn't the start of its description.
+    var isPost: Bool {
+        guard let description else { return false }
+        let post = TitleText.flattened(description)
+        // Article descriptions are a sentence or two; only a post runs this long.
+        if post.count >= 800 { return true }
+        guard let title else { return false }
+        // "Opening of the post… | Author | 24 comments" → "Opening of the post"
+        let opening = TitleText.flattened(String(title.prefix { $0 != "…" }).components(separatedBy: " | ")[0])
+        return opening.count >= 20 && post.hasPrefix(opening)
+    }
+
+    /// The title to fill in: a post's opening, shortened, or the page's own title, shortened only
+    /// when it's far longer than any real headline.
+    var suggestedTitle: String? {
+        if isPost, let description { return TitleText.shortened(TitleText.flattened(description)) }
+        guard let title else { return nil }
+        return title.count > 150 ? TitleText.shortened(title) : title
+    }
+}
+
+enum TitleText {
+    /// The length a shortened title or preview is cut to, "…" included.
+    static let titleLength = 65
+
+    /// `text` cut at the end of a word to fit `limit` characters, ending in "…", or as it is if it fits.
+    static func shortened(_ text: String, limit: Int = titleLength) -> String {
+        guard text.count > limit else { return text }
+        var cut = String(text.prefix(limit - 1))
+        if let space = cut.lastIndex(where: \.isWhitespace), cut.distance(from: cut.startIndex, to: space) > limit / 2 {
+            cut = String(cut[..<space])
+        }
+        return cut.trimmingCharacters(in: .whitespaces.union(CharacterSet(charactersIn: ",;:-–—"))) + "…"
+    }
+
+    /// All runs of spaces and line breaks turned into single spaces.
+    static func flattened(_ text: String) -> String {
+        text.split(whereSeparator: \.isWhitespace).joined(separator: " ")
     }
 }

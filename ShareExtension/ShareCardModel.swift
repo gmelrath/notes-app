@@ -8,6 +8,8 @@ final class ShareCardModel: ObservableObject {
     @Published private(set) var isFetchingTitle = false
     @Published var title = ""
     @Published private(set) var summary: String?
+    /// Whether the link is a social post, whose whole text is in `summary`.
+    private var isPost = false
     @Published var note = ""
     @Published private(set) var previous: Capture?
     @Published private(set) var errorMessage: String?
@@ -71,6 +73,7 @@ final class ShareCardModel: ObservableObject {
             note: destination == .email && !trimmedNote.isEmpty ? trimmedNote : nil,
             text: item.text,
             fileNames: item.files.map(\.name),
+            isPost: item.url != nil && isPost,
             destination: destination,
             status: .failed
         )
@@ -128,10 +131,11 @@ final class ShareCardModel: ObservableObject {
             isFetchingTitle = true
             let metadata = await LinkMetadata.fetch(for: url)
             isFetchingTitle = false
-            if let fetched = metadata.title, !fetched.isEmpty, title == defaultTitle(for: result) {
+            if let fetched = metadata.suggestedTitle, !fetched.isEmpty, title == defaultTitle(for: result) {
                 title = fetched
             }
             summary = metadata.description
+            isPost = metadata.isPost
         }
     }
 

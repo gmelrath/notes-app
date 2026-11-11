@@ -10,6 +10,8 @@ final class ComposeModel: ObservableObject {
     @Published var title = ""
     @Published var note = ""
     @Published private(set) var summary: String?
+    /// Whether the link is a social post, whose whole text is in `summary`.
+    private var isPost = false
     @Published private(set) var isFetchingTitle = false
     @Published private(set) var previous: Capture?
     @Published private(set) var errorMessage: String?
@@ -125,6 +127,7 @@ final class ComposeModel: ObservableObject {
             url: url,
             summary: summary,
             note: body,
+            isPost: url != nil && isPost,
             destination: destination,
             status: .failed
         )
@@ -137,6 +140,7 @@ final class ComposeModel: ObservableObject {
         note = ""
         fetchedTitle = ""
         summary = nil
+        isPost = false
         previous = nil
         errorMessage = nil
         sent = nil
@@ -148,6 +152,7 @@ final class ComposeModel: ObservableObject {
     private func linkChanged() {
         fetchTask?.cancel()
         summary = nil
+        isPost = false
         errorMessage = nil
         if title == fetchedTitle { title = "" }
         fetchedTitle = ""
@@ -168,7 +173,8 @@ final class ComposeModel: ObservableObject {
             guard !Task.isCancelled else { return }
             isFetchingTitle = false
             summary = metadata.description
-            if let fetched = metadata.title, !fetched.isEmpty, title.isEmpty {
+            isPost = metadata.isPost
+            if let fetched = metadata.suggestedTitle, !fetched.isEmpty, title.isEmpty {
                 title = fetched
                 fetchedTitle = fetched
             }

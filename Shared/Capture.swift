@@ -27,6 +27,8 @@ struct Capture: Codable, Identifiable, Hashable {
     var note: String?
     var text: String?
     var fileNames: [String] = []
+    /// A social post: `summary` holds the whole post, which Notion puts in the page body.
+    var isPost = false
     var destination: Destination
     var status: Status
     var errorMessage: String?
@@ -80,6 +82,7 @@ extension Capture {
         note = try container.decodeIfPresent(String.self, forKey: .note)
         text = try container.decodeIfPresent(String.self, forKey: .text)
         fileNames = try container.decodeIfPresent([String].self, forKey: .fileNames) ?? []
+        isPost = try container.decodeIfPresent(Bool.self, forKey: .isPost) ?? false
         status = try container.decodeIfPresent(Status.self, forKey: .status) ?? .failed
         errorMessage = try container.decodeIfPresent(String.self, forKey: .errorMessage)
     }
