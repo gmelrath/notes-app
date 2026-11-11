@@ -22,7 +22,7 @@ enum NotionClient {
     }
 
     private static let apiVersion = "2025-09-03"
-    // Notion limits each block of text to 2,000 characters.
+    // Notion limits each block of text to 2,000 characters, counted as UTF-16 units: most emoji count as two.
     private static let textLimit = 2000
 
     static func addPage(for capture: Capture) async throws {
@@ -73,6 +73,21 @@ enum NotionClient {
     }
 
     private static func text(_ content: String) -> [String: Any] {
-        ["text": ["content": String(content.prefix(textLimit))]]
+        ["text": ["content": fitted(content, limit: textLimit)]]
+    }
+
+    /// `content` cut to fit within `limit` as Notion counts it, ending in "…" when shortened.
+    /// Cuts between whole characters, so an emoji or accented letter is never split.
+    static func fitted(_ content: String, limit: Int) -> String {
+        guard content.utf16.count > limit else { return content }
+        var result = ""
+        var length = 1 // room for the "…"
+        for character in content {
+            let size = character.utf16.count
+            guard length + size <= limit else { break }
+            result.append(character)
+            length += size
+        }
+        return result + "…"
     }
 }
