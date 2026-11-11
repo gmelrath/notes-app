@@ -107,16 +107,14 @@ final class ComposeModel: ObservableObject {
         confirmation = nil
     }
 
-    /// With a link, the note travels as-is. Without one, its first line becomes the title and the rest the body.
+    /// The note always travels whole. Without a link, its first line also becomes the title,
+    /// so an email's subject is the first line and its body the entire note.
     private func makeCapture(for destination: Destination) -> Capture {
         var title = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        var body: String? = trimmedNote.isEmpty ? nil : trimmedNote
+        let body: String? = trimmedNote.isEmpty ? nil : trimmedNote
 
         if url == nil {
-            let lines = trimmedNote.split(separator: "\n", maxSplits: 1, omittingEmptySubsequences: false)
-            title = String(lines.first ?? "").trimmingCharacters(in: .whitespaces)
-            let rest = lines.count > 1 ? lines[1].trimmingCharacters(in: .whitespacesAndNewlines) : ""
-            body = rest.isEmpty ? nil : rest
+            title = String(trimmedNote.prefix { $0 != "\n" }).trimmingCharacters(in: .whitespaces)
         } else if title.isEmpty {
             title = url?.host() ?? "Untitled"
         }

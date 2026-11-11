@@ -38,7 +38,7 @@ enum NotionClient {
         }
         // A note only reaches Notion when it was written in the app, and then it beats the page's description.
         // (The share card keeps its note for email, so it never sets one on Notion captures.)
-        if let summary = [capture.note, capture.summary].compactMap({ $0 }).first(where: { !$0.isEmpty }) {
+        if let summary = [noteSummary(for: capture), capture.summary].compactMap({ $0 }).first(where: { !$0.isEmpty }) {
             properties["Summary"] = ["rich_text": [text(summary)]]
         }
         let body: [String: Any] = [
@@ -74,6 +74,17 @@ enum NotionClient {
 
     private static func text(_ content: String) -> [String: Any] {
         ["text": ["content": fitted(content, limit: textLimit)]]
+    }
+
+    /// The note as Notion's Summary shows it. A note written without a link starts with its title
+    /// line, which Notion already shows as the Title, so the Summary gets only the lines after it.
+    static func noteSummary(for capture: Capture) -> String? {
+        guard let note = capture.note else { return nil }
+        guard capture.url == nil else { return note }
+        let firstLine = note.prefix { $0 != "\n" }.trimmingCharacters(in: .whitespaces)
+        // Entries saved before the whole note was kept hold only the lines after the title.
+        guard firstLine == capture.title else { return note }
+        return note.drop { $0 != "\n" }.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     /// `content` cut to fit within `limit` as Notion counts it, ending in "…" when shortened.
