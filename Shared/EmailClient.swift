@@ -96,7 +96,7 @@ enum EmailClient {
             parts.append("<p><a href=\"\(escape(url.absoluteString))\">\(label)</a></p>")
         }
         if let summary = capture.summary, !summary.isEmpty {
-            parts.append("<p style=\"color:#666\">\(escape(summary))</p>")
+            parts.append("<p style=\"color:#666\">\(escape(summary).replacingOccurrences(of: "\n", with: "<br>"))</p>")
         }
         if let text = capture.text, !text.isEmpty {
             parts.append("<blockquote style=\"color:#444;border-left:3px solid #ddd;margin:0;padding-left:12px\">\(escape(text).replacingOccurrences(of: "\n", with: "<br>"))</blockquote>")
