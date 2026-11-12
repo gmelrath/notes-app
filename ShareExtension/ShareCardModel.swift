@@ -21,6 +21,8 @@ final class ShareCardModel: ObservableObject {
     /// Retries from this card update the same history entry instead of adding new ones.
     private let captureID = UUID()
     private let close: () -> Void
+    /// The page title the sharing app sent along with the link, if any (Safari and many apps do).
+    private var sharedTitle: String?
 
     init(close: @escaping () -> Void) {
         self.close = close
@@ -82,7 +84,7 @@ final class ShareCardModel: ObservableObject {
     var displayTitle: String {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmed.isEmpty { return trimmed }
-        return item.url?.host() ?? item.files.first?.name ?? "Untitled"
+        return item.url.flatMap { LinkMetadata.title(fromAddress: $0) ?? $0.host() } ?? item.files.first?.name ?? "Untitled"
     }
 
     // MARK: - Loading what was shared
@@ -90,6 +92,7 @@ final class ShareCardModel: ObservableObject {
     func load(from extensionItems: [NSExtensionItem]) async {
         var result = SharedItem()
         let providers = extensionItems.flatMap { $0.attachments ?? [] }
+        sharedTitle = extensionItems.lazy.compactMap { Self.title(in: $0) }.first
 
         for provider in providers {
             if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier),
@@ -131,7 +134,9 @@ final class ShareCardModel: ObservableObject {
             isFetchingTitle = true
             let metadata = await LinkMetadata.fetch(for: url)
             isFetchingTitle = false
-            if let fetched = metadata.suggestedTitle, !fetched.isEmpty, title == defaultTitle(for: result) {
+            // The page's own title wins; then the one the sharing app sent; then one made from the address.
+            if title == defaultTitle(for: result),
+               let fetched = metadata.suggestedTitle ?? sharedTitle ?? LinkMetadata.title(fromAddress: url), !fetched.isEmpty {
                 title = fetched
             }
             summary = metadata.description
@@ -146,7 +151,16 @@ final class ShareCardModel: ObservableObject {
         if item.url == nil, let file = item.files.first {
             return file.name
         }
-        return ""
+        return item.url == nil ? "" : sharedTitle ?? ""
+    }
+
+    /// A title the sharing app put on the item. Ignored when it's really the link, or shared text.
+    private static func title(in item: NSExtensionItem) -> String? {
+        guard let raw = item.attributedTitle?.string ?? item.attributedContentText?.string else { return nil }
+        let title = TitleText.flattened(raw)
+        guard !title.isEmpty, raw.count <= 300, !raw.contains("\n"),
+              !title.lowercased().hasPrefix("http://"), !title.lowercased().hasPrefix("https://") else { return nil }
+        return TitleText.shortened(title, limit: 150)
     }
 
     private func firstLink(in text: String) -> URL? {

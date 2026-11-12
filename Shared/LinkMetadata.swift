@@ -1,17 +1,28 @@
 import Foundation
+import LinkPresentation
 
 /// Title and description for a web page, read from its HTML `<meta>` tags.
 struct LinkMetadata {
     var title: String?
     var description: String?
 
+    /// Reads the page itself, then, if that gives no title (the site blocked the request, or sets
+    /// its title only once the page has loaded), asks Apple's link-preview service, which Messages uses.
     static func fetch(for url: URL) async -> LinkMetadata {
+        var metadata = await fetchPage(url)
+        if metadata.title == nil { metadata.title = await previewTitle(for: url) }
+        return metadata
+    }
+
+    private static func fetchPage(_ url: URL) async -> LinkMetadata {
         var request = URLRequest(url: url, timeoutInterval: 8)
         request.setValue(
             "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
             forHTTPHeaderField: "User-Agent"
         )
-        guard let (data, _) = try? await URLSession.shared.data(for: request) else {
+        // A blocked request still returns a page, such as a "Just a moment..." check; ignore it.
+        guard let (data, response) = try? await URLSession.shared.data(for: request),
+              (200..<300).contains((response as? HTTPURLResponse)?.statusCode ?? 0) else {
             return LinkMetadata()
         }
         // The <head> is near the top; no need to scan a huge page.
@@ -34,6 +45,37 @@ struct LinkMetadata {
 
         // Posts arrive with their paragraphs in the description; keep the line breaks.
         return LinkMetadata(title: title.map { clean($0) }, description: description.map { clean($0, keepingLineBreaks: true) })
+    }
+
+    @MainActor
+    private static func previewTitle(for url: URL) async -> String? {
+        let provider = LPMetadataProvider()
+        provider.timeout = 8
+        guard let title = (try? await provider.startFetchingMetadata(for: url))?.title else { return nil }
+        let cleaned = TitleText.flattened(title)
+        // The service falls back to the bare address, which is no better than ours.
+        return cleaned.isEmpty || cleaned == url.host() || cleaned == url.absoluteString ? nil : cleaned
+    }
+
+    /// A readable title from the link itself, for when the page gives none:
+    /// ".../how-i-use-claude-as-a-product-manager-edc23b7d8123" → "How I Use Claude As A Product Manager".
+    /// Nil when the address has no words to use, as with short links like "lnkd.in/p/ef6c2Pr3".
+    static func title(fromAddress url: URL) -> String? {
+        let segment = url.pathComponents.reversed().first { component in
+            component != "/" && component.contains { $0 == "-" || $0 == "_" }
+        }
+        guard let segment else { return nil }
+        var words = (segment as NSString).deletingPathExtension
+            .split(whereSeparator: { $0 == "-" || $0 == "_" || $0 == "+" })
+            .map(String.init)
+        // Sites add an ID to the end: "...-edc23b7d8123", "...-7524543751785095169".
+        while let last = words.last, words.count > 1, last.count >= 6,
+              last.allSatisfy(\.isHexDigit) && last.contains(where: \.isNumber) {
+            words.removeLast()
+        }
+        guard words.count >= 2, words.contains(where: { $0.contains(where: \.isLetter) }) else { return nil }
+        let title = words.map { $0.prefix(1).uppercased() + $0.dropFirst() }.joined(separator: " ")
+        return TitleText.shortened(title)
     }
 
     // MARK: - Helpers

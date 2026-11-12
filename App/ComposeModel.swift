@@ -118,7 +118,7 @@ final class ComposeModel: ObservableObject {
         if url == nil {
             title = String(trimmedNote.prefix { $0 != "\n" }).trimmingCharacters(in: .whitespaces)
         } else if title.isEmpty {
-            title = url?.host() ?? "Untitled"
+            title = url.flatMap { LinkMetadata.title(fromAddress: $0) ?? $0.host() } ?? "Untitled"
         }
 
         return Capture(
@@ -174,7 +174,8 @@ final class ComposeModel: ObservableObject {
             isFetchingTitle = false
             summary = metadata.description
             isPost = metadata.isPost
-            if let fetched = metadata.suggestedTitle, !fetched.isEmpty, title.isEmpty {
+            // The page's own title, or else one made from the address.
+            if let fetched = metadata.suggestedTitle ?? LinkMetadata.title(fromAddress: url), !fetched.isEmpty, title.isEmpty {
                 title = fetched
                 fetchedTitle = fetched
             }
