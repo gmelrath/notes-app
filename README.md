@@ -62,11 +62,11 @@ You need Xcode and an Apple Developer Program membership, which keeps the app wo
 
 ## Keys
 
-Private keys go in `Config/Secrets.xcconfig`, which git ignores. To create it, copy `Config/Secrets.example.xcconfig` and fill it in. Keys are built into the app, so rebuild after changing them.
+The Notion and Resend keys are never part of the app or this repository. Paste them into the app's **Settings → Keys** once. The app keeps them in the device's Keychain, shares them with the share card, and iCloud Keychain carries them to your other devices. Paste a new key there to replace one; no rebuild is needed.
 
 ### Notion
 
-1. At [notion.so/profile/integrations](https://www.notion.so/profile/integrations), create an **internal** integration (API token) called Campfire, and copy its secret into `NOTION_TOKEN`.
+1. At [notion.so/profile/integrations](https://www.notion.so/profile/integrations), create an **internal** integration (API token) called Campfire, and paste its secret into **Settings → Keys → Notion key**.
 2. In Notion, open the page that contains the database, then go to **••• → Connections** and add **Campfire**.
 
 The target database is set by `NOTION_DATA_SOURCE_ID` in `Config/Campfire.xcconfig`. Each capture becomes a row with:
@@ -84,6 +84,6 @@ Notes written in the app follow slightly different rules. With a link, your note
 Email is sent through [Resend](https://resend.com).
 
 1. Sign up with the address you'll send captures to, and enter that address in the app's Settings. Resend's shared sender (`onboarding@resend.dev`) can only deliver to the account owner's address.
-2. Create an API key with **Sending access**, and copy it into `RESEND_API_KEY`.
+2. Create an API key with **Sending access**, and paste it into **Settings → Keys → Resend key**.
 
 Each email uses the page title as its subject. The body has your note, the link, the page description and any shared text. Shared files are attached, up to 25 MB in total. If an email with files fails, copies of the files are kept on the phone so it can be retried from History. They're removed once it sends, or when you delete the entry.

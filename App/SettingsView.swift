@@ -46,6 +46,15 @@ struct SettingsView: View {
             }
 
             Section {
+                KeyField(title: "Notion key", key: .notionToken)
+                KeyField(title: "Resend key", key: .resendAPIKey)
+            } header: {
+                Text("Keys")
+            } footer: {
+                Text("Kept in this device’s Keychain and carried to your other devices by iCloud Keychain. Paste a key to replace the saved one.")
+            }
+
+            Section {
                 Picker("Title font", selection: $titleFont) {
                     ForEach(TitleFont.allCases) { option in
                         Text(option.name).font(option.font(size: 22, relativeTo: .title2)).tag(option)
@@ -60,5 +69,34 @@ struct SettingsView: View {
             }
         }
         .pageList()
+    }
+}
+
+/// One private key. The saved key is never shown; pasting a new one replaces it.
+private struct KeyField: View {
+    let title: String
+    let key: Secrets.Key
+    @State private var draft = ""
+    @State private var isSaved = false
+
+    var body: some View {
+        HStack {
+            SecureField(title, text: $draft, prompt: Text(isSaved ? "\(title): saved" : "Paste \(title.lowercased())"))
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .textContentType(.password)
+            if isSaved && draft.isEmpty {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+                    .accessibilityLabel("Saved")
+            }
+        }
+        .onAppear { isSaved = Secrets.value(key) != nil }
+        .onChange(of: draft) {
+            guard !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, Secrets.set(draft, for: key) else { return }
+            isSaved = true
+        }
+        .onSubmit { draft = "" }
+        .onDisappear { draft = "" }
     }
 }

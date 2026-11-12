@@ -1,7 +1,7 @@
 import Foundation
 
 /// Sends a capture to the address in Settings using Resend's API.
-/// The key comes from Config/Secrets.xcconfig via each target's Info.plist.
+/// The key is in the Keychain (see Secrets).
 enum EmailClient {
     enum EmailError: LocalizedError {
         case missingKey
@@ -14,8 +14,8 @@ enum EmailClient {
 
         var errorDescription: String? {
             switch self {
-            case .missingKey: "Email isn't set up yet. Add your Resend key to Config/Secrets.xcconfig."
-            case .unauthorized: "Resend didn't accept the key. Check Config/Secrets.xcconfig."
+            case .missingKey: "Email isn't set up yet. Add your Resend key in Settings."
+            case .unauthorized: "Resend didn't accept the key. Check your Resend key in Settings."
             case .notAccountAddress: "Resend can only send to the address you signed up with. Use that address in Settings."
             case .attachmentsTooLarge: "The files are too large to email (25 MB limit)."
             case .unreadableAttachment(let name): "Couldn't read \(name). Try sharing it again."
@@ -30,7 +30,7 @@ enum EmailClient {
     private static let attachmentLimit: Int64 = 25 * 1024 * 1024
 
     static func send(_ capture: Capture, to address: String, attachments: [URL]) async throws {
-        guard let key = Secrets.value("ResendAPIKey") else { throw EmailError.missingKey }
+        guard let key = Secrets.value(.resendAPIKey) else { throw EmailError.missingKey }
 
         var body: [String: Any] = [
             "from": from,

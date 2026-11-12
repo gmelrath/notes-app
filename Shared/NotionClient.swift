@@ -1,7 +1,7 @@
 import Foundation
 
 /// Adds a row to the "Things to Read…" database using Notion's API.
-/// The key and database come from Config/Campfire.xcconfig via each target's Info.plist.
+/// The key is in the Keychain (see Secrets); the database comes from Config/Campfire.xcconfig.
 enum NotionClient {
     enum NotionError: LocalizedError {
         case missingKey
@@ -12,8 +12,8 @@ enum NotionClient {
 
         var errorDescription: String? {
             switch self {
-            case .missingKey: "Notion isn't set up yet. Add your Notion key to Config/Secrets.xcconfig."
-            case .unauthorized: "Notion didn't accept the key. Check Config/Secrets.xcconfig."
+            case .missingKey: "Notion isn't set up yet. Add your Notion key in Settings."
+            case .unauthorized: "Notion didn't accept the key. Check your Notion key in Settings."
             case .databaseNotShared: "Campfire can’t see your Notion database. In Notion, add the Campfire connection to Things to Read…"
             case .offline: "No internet connection. Try again when you're back online."
             case .rejected(let message): "Notion said: \(message)"
@@ -32,7 +32,7 @@ enum NotionClient {
     static let previewLength = 200
 
     static func addPage(for capture: Capture) async throws {
-        guard let token = Secrets.value("NotionToken"), let dataSourceID = Secrets.value("NotionDataSourceID") else {
+        guard let token = Secrets.value(.notionToken), let dataSourceID = Secrets.setting("NotionDataSourceID") else {
             throw NotionError.missingKey
         }
 
