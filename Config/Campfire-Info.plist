@@ -2,12 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>KeychainGroup</key>
+	<string>$(AppIdentifierPrefix)com.gregmelrath.Capture.keys</string>
 	<key>NotionDataSourceID</key>
 	<string>$(NOTION_DATA_SOURCE_ID)</string>
-	<key>NotionToken</key>
-	<string>$(NOTION_TOKEN)</string>
-	<key>ResendAPIKey</key>
-	<string>$(RESEND_API_KEY)</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>IBMPlexSerif-Medium.ttf</string>
