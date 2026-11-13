@@ -25,7 +25,7 @@ final class ComposeModel: ObservableObject {
     /// The title last filled in automatically, so a title the user typed is never replaced.
     private var fetchedTitle = ""
 
-    var url: URL? { Self.link(in: linkText) }
+    var url: URL? { LinkMetadata.webLink(in: linkText) }
 
     private var trimmedNote: String { note.trimmingCharacters(in: .whitespacesAndNewlines) }
     func canSend(to destination: Destination) -> Bool {
@@ -44,7 +44,7 @@ final class ComposeModel: ObservableObject {
     func paste(_ providers: [NSItemProvider]) async {
         for provider in providers {
             if let text = await Self.text(from: provider) {
-                linkText = Self.link(in: text)?.absoluteString ?? text
+                linkText = LinkMetadata.webLink(in: text)?.absoluteString ?? text
                 return
             }
         }
@@ -81,26 +81,16 @@ final class ComposeModel: ObservableObject {
         sending = destination
         errorMessage = nil
         confirmation = nil
-        var capture = makeCapture(for: destination)
-
-        do {
-            try await Sender.send(capture, to: destination)
-            capture.status = .sent
-            CaptureStore.save(capture)
-            Task { await syncHistory() }
-            sending = nil
-            sent = destination
-            try? await Task.sleep(for: .seconds(0.8))
-            reset()
-            confirmation = "Sent to \(destination.rawValue)."
-        } catch {
-            capture.status = .failed
-            capture.errorMessage = error.localizedDescription
-            CaptureStore.save(capture)
-            Task { await syncHistory() }
-            sending = nil
-            errorMessage = error.localizedDescription
+        let (capture, _) = await Delivery.deliver(makeCapture(for: destination)) { await syncHistory() }
+        sending = nil
+        guard capture.status == .sent else {
+            errorMessage = capture.errorMessage
+            return
         }
+        sent = destination
+        try? await Task.sleep(for: .seconds(0.8))
+        reset()
+        confirmation = "Sent to \(destination.rawValue)."
     }
 
     func dismissConfirmation() {
@@ -145,6 +135,12 @@ final class ComposeModel: ObservableObject {
         captureID = UUID()
     }
 
+    /// Checks the history for an earlier send of this link, as on the share card. Called again
+    /// when your other device's history arrives, so a link sent there moments ago is flagged.
+    func refreshPrevious() {
+        previous = url.flatMap { CaptureStore.previous(matching: $0, excluding: captureID) }
+    }
+
     // MARK: - Link handling
 
     private func linkChanged() {
@@ -160,33 +156,23 @@ final class ComposeModel: ObservableObject {
             isFetchingTitle = false
             return
         }
-        previous = CaptureStore.previous(matching: url)
+        refreshPrevious()
 
         fetchTask = Task {
             // Wait for typing to settle before fetching.
             try? await Task.sleep(for: .milliseconds(500))
             guard !Task.isCancelled else { return }
             isFetchingTitle = true
-            let metadata = await LinkMetadata.fetch(for: url)
+            let details = await LinkMetadata.details(for: url)
             guard !Task.isCancelled else { return }
             isFetchingTitle = false
-            summary = metadata.description
-            isPost = metadata.isPost
-            // The page's own title, or else one made from the address.
-            if let fetched = metadata.suggestedTitle ?? LinkMetadata.title(fromAddress: url), !fetched.isEmpty, title.isEmpty {
+            summary = details.summary
+            isPost = details.isPost
+            // Never replaces a title you've typed.
+            if let fetched = details.title, title.isEmpty {
                 title = fetched
                 fetchedTitle = fetched
             }
         }
-    }
-
-    /// A web link typed or pasted on its own, with or without "https://", or the first link inside longer text.
-    static func link(in text: String) -> URL? {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return nil }
-        let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue)
-        let match = detector?.firstMatch(in: trimmed, range: NSRange(trimmed.startIndex..., in: trimmed))
-        guard let url = match?.url, url.scheme?.hasPrefix("http") == true else { return nil }
-        return url
     }
 }

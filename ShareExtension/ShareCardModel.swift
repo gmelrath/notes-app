@@ -37,32 +37,19 @@ final class ShareCardModel: ObservableObject {
         guard canSend(to: destination) else { return }
         sending = destination
         errorMessage = nil
-        var capture = makeCapture(for: destination)
         let attachments = destination.sendsFiles ? item.files.map(\.fileURL) : []
-
-        do {
-            try await Sender.send(capture, to: destination, attachments: attachments)
-            capture.status = .sent
-            CaptureStore.save(capture)
-            AttachmentStore.remove(for: [captureID])
-            sending = nil
-            sent = destination
-            // Upload while the "Sent" tick shows, so the other device knows about it straight away.
-            // If it can't finish, the app uploads it next time it opens.
-            async let upload = CloudHistory.shared.sync(includePull: false)
-            try? await Task.sleep(for: .seconds(0.8))
-            _ = await upload
-            close()
-        } catch {
-            capture.status = .failed
-            capture.errorMessage = error.localizedDescription
-            CaptureStore.save(capture)
-            // The share sheet's copies vanish when the card closes; keep them so History can retry.
-            if !attachments.isEmpty { AttachmentStore.save(attachments, for: captureID) }
-            Task { await CloudHistory.shared.sync(includePull: false) }
-            sending = nil
-            errorMessage = error.localizedDescription
+        let (capture, upload) = await Delivery.deliver(makeCapture(for: destination), attachments: attachments)
+        sending = nil
+        guard capture.status == .sent else {
+            errorMessage = capture.errorMessage
+            return
         }
+        sent = destination
+        // Upload while the "Sent" tick shows, so the other device knows about it straight away.
+        // If it can't finish, the app uploads it next time it opens.
+        try? await Task.sleep(for: .seconds(0.8))
+        await upload.value
+        close()
     }
 
     private func makeCapture(for destination: Destination) -> Capture {
@@ -109,7 +96,7 @@ final class ShareCardModel: ObservableObject {
 
         // Many apps share a post as text with the link inside it.
         if result.url == nil, let text = result.text {
-            result.url = firstLink(in: text)
+            result.url = LinkMetadata.webLink(in: text)
         }
         // Shared text that is only the link adds nothing.
         if let text = result.text, text.trimmingCharacters(in: .whitespacesAndNewlines) == result.url?.absoluteString {
@@ -132,15 +119,14 @@ final class ShareCardModel: ObservableObject {
 
         if let url = result.url {
             isFetchingTitle = true
-            let metadata = await LinkMetadata.fetch(for: url)
+            let details = await LinkMetadata.details(for: url, sharedTitle: sharedTitle)
             isFetchingTitle = false
-            // The page's own title wins; then the one the sharing app sent; then one made from the address.
-            if title == defaultTitle(for: result),
-               let fetched = metadata.suggestedTitle ?? sharedTitle ?? LinkMetadata.title(fromAddress: url), !fetched.isEmpty {
+            // Never replaces a title you've typed.
+            if title == defaultTitle(for: result), let fetched = details.title {
                 title = fetched
             }
-            summary = metadata.description
-            isPost = metadata.isPost
+            summary = details.summary
+            isPost = details.isPost
         }
     }
 
@@ -163,10 +149,6 @@ final class ShareCardModel: ObservableObject {
         return TitleText.shortened(title, limit: 150)
     }
 
-    private func firstLink(in text: String) -> URL? {
-        let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue)
-        return detector?.firstMatch(in: text, range: NSRange(text.startIndex..., in: text))?.url
-    }
 
     private func loadURL(from provider: NSItemProvider) async -> URL? {
         let item = try? await provider.loadItem(forTypeIdentifier: UTType.url.identifier)

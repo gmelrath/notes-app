@@ -133,7 +133,35 @@ struct LinkMetadata {
     }
 }
 
+/// What a link fills in on the compose screen and the share card.
+struct LinkDetails {
+    var title: String?
+    var summary: String?
+    var isPost = false
+}
+
 extension LinkMetadata {
+    /// Reads `url` and decides what it fills in. The title is the page's own (shortened for a post),
+    /// else the one the sharing app sent, else one made from the address.
+    static func details(for url: URL, sharedTitle: String? = nil) async -> LinkDetails {
+        let metadata = await fetch(for: url)
+        let title = [metadata.suggestedTitle, sharedTitle, title(fromAddress: url)]
+            .compactMap { $0 }
+            .first { !$0.isEmpty }
+        return LinkDetails(title: title, summary: metadata.description, isPost: metadata.isPost)
+    }
+
+    /// A web link typed or pasted on its own, with or without "https://", or the first web link
+    /// inside longer text. Other kinds of link, like email addresses and phone numbers, don't count.
+    static func webLink(in text: String) -> URL? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue) else { return nil }
+        return detector.matches(in: trimmed, range: NSRange(trimmed.startIndex..., in: trimmed))
+            .lazy
+            .compactMap(\.url)
+            .first { $0.scheme == "http" || $0.scheme == "https" }
+    }
+
     /// Whether the link is a social post (LinkedIn, X, Threads and the like) rather than an article.
     /// Posts have no real title: their "title" is the post's opening, cut short, and the description
     /// is the post itself. A real headline, like a Medium article's, isn't the start of its description.

@@ -39,6 +39,9 @@ struct ComposeView: View {
         .onReceive(NotificationCenter.default.publisher(for: UIPasteboard.changedNotification)) { _ in
             model.refreshPasteboard()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .historyDidChange)) { _ in
+            model.refreshPrevious()
+        }
         .onChange(of: model.confirmation) {
             guard model.confirmation != nil else { return }
             focusedField = .note
