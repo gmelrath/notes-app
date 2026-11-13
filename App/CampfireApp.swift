@@ -75,20 +75,10 @@ final class HistoryModel: ObservableObject {
     }
 
     func retry(_ capture: Capture) async -> Capture {
-        var updated = capture
-        updated.date = .now
-        do {
-            try await Sender.send(capture, to: capture.destination, attachments: AttachmentStore.files(for: capture.id))
-            updated.status = .sent
-            updated.errorMessage = nil
-            AttachmentStore.remove(for: [capture.id])
-        } catch {
-            updated.status = .failed
-            updated.errorMessage = error.localizedDescription
-        }
-        CaptureStore.save(updated)
+        var retry = capture
+        retry.date = .now
+        let (updated, _) = await Delivery.deliver(retry, attachments: AttachmentStore.files(for: capture.id)) { await syncHistory() }
         reload()
-        Task { await syncHistory() }
         return updated
     }
 }
