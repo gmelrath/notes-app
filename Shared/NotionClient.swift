@@ -98,7 +98,7 @@ enum NotionClient {
     static func pageText(for capture: Capture) -> String? {
         let text = if capture.isPost {
             capture.summary
-        } else if capture.url == nil, let note = capture.note {
+        } else if capture.url == nil, let note = noteText(for: capture) {
             // Entries saved before the whole note was kept hold only the lines after the title.
             noteSummary(for: capture) == note ? capture.title + "\n" + note : note
         } else {
@@ -111,12 +111,18 @@ enum NotionClient {
     /// The note as Notion's Summary shows it. A note written without a link starts with its title
     /// line, which Notion already shows as the Title, so the Summary gets only the lines after it.
     static func noteSummary(for capture: Capture) -> String? {
-        guard let note = capture.note else { return nil }
-        guard capture.url == nil else { return note }
+        guard capture.url == nil else { return capture.note }
+        guard let note = noteText(for: capture) else { return nil }
         let firstLine = note.prefix { $0 != "\n" }.trimmingCharacters(in: .whitespaces)
         // Entries saved before the whole note was kept hold only the lines after the title.
         guard firstLine == capture.title else { return note }
         return note.drop { $0 != "\n" }.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// The words of an entry without a link: a note written in the app, or text shared to the
+    /// share card, which stands in for a note.
+    private static func noteText(for capture: Capture) -> String? {
+        [capture.note, capture.text].compactMap { $0 }.first { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
     }
 
     // MARK: - Notion's text format

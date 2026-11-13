@@ -16,8 +16,6 @@ final class ShareCardModel: ObservableObject {
     @Published private(set) var sending: Destination?
     @Published private(set) var sent: Destination?
 
-    let hasEmailAddress = AppSettings.emailAddress != nil
-
     /// Retries from this card update the same history entry instead of adding new ones.
     private let captureID = UUID()
     private let close: () -> Void
@@ -28,17 +26,19 @@ final class ShareCardModel: ObservableObject {
         self.close = close
     }
 
-    var canSendToNotion: Bool { item.url != nil && sending == nil && sent == nil }
-    var canSendByEmail: Bool { !item.isEmpty && hasEmailAddress && sending == nil && sent == nil }
+    func canSend(to destination: Destination) -> Bool {
+        sending == nil && sent == nil && destination.isSetUp
+            && destination.accepts(hasLink: item.url != nil, hasText: !(item.text ?? "").isEmpty, hasFiles: !item.files.isEmpty)
+    }
 
     func cancel() { close() }
 
     func send(to destination: Destination) async {
-        guard sending == nil, sent == nil else { return }
+        guard canSend(to: destination) else { return }
         sending = destination
         errorMessage = nil
         var capture = makeCapture(for: destination)
-        let attachments = destination == .email ? item.files.map(\.fileURL) : []
+        let attachments = destination.sendsFiles ? item.files.map(\.fileURL) : []
 
         do {
             try await Sender.send(capture, to: destination, attachments: attachments)
@@ -72,7 +72,7 @@ final class ShareCardModel: ObservableObject {
             title: displayTitle,
             url: item.url,
             summary: summary,
-            note: destination == .email && !trimmedNote.isEmpty ? trimmedNote : nil,
+            note: destination.includesShareCardNote && !trimmedNote.isEmpty ? trimmedNote : nil,
             text: item.text,
             fileNames: item.files.map(\.name),
             isPost: item.url != nil && isPost,

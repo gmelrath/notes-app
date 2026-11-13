@@ -19,8 +19,6 @@ final class ComposeModel: ObservableObject {
     @Published private(set) var sending: Destination?
     @Published private(set) var sent: Destination?
 
-    var hasEmailAddress: Bool { AppSettings.emailAddress != nil }
-
     /// Retries from this screen update the same history entry instead of adding new ones.
     private var captureID = UUID()
     private var fetchTask: Task<Void, Never>?
@@ -30,10 +28,10 @@ final class ComposeModel: ObservableObject {
     var url: URL? { Self.link(in: linkText) }
 
     private var trimmedNote: String { note.trimmingCharacters(in: .whitespacesAndNewlines) }
-    private var hasContent: Bool { url != nil || !trimmedNote.isEmpty }
-
-    var canSend: Bool { hasContent && sending == nil && sent == nil }
-    var canSendByEmail: Bool { canSend && hasEmailAddress }
+    func canSend(to destination: Destination) -> Bool {
+        sending == nil && sent == nil && destination.isSetUp
+            && destination.accepts(hasLink: url != nil, hasText: !trimmedNote.isEmpty, hasFiles: false)
+    }
 
     /// Whether the clipboard holds a link or text. Checking this doesn't trigger iOS's "Allow Paste" prompt.
     @Published private(set) var canPaste = false
@@ -79,7 +77,7 @@ final class ComposeModel: ObservableObject {
     }
 
     func send(to destination: Destination) async {
-        guard canSend else { return }
+        guard canSend(to: destination) else { return }
         sending = destination
         errorMessage = nil
         confirmation = nil

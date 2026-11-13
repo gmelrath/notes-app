@@ -1,17 +1,5 @@
 import Foundation
 
-enum Destination: String, Codable, CaseIterable {
-    case notion = "Notion"
-    case email = "Email"
-
-    var systemImage: String {
-        switch self {
-        case .notion: "books.vertical"
-        case .email: "envelope"
-        }
-    }
-}
-
 /// One entry in the on-phone history: something shared, where it went, and whether it got there.
 struct Capture: Codable, Identifiable, Hashable {
     enum Status: String, Codable {

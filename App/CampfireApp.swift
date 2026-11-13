@@ -71,7 +71,7 @@ final class HistoryModel: ObservableObject {
 
     /// Retry needs the kept copies of any shared files; without them, files would silently go missing.
     func canRetry(_ capture: Capture) -> Bool {
-        capture.destination == .notion || capture.fileNames.isEmpty || !AttachmentStore.files(for: capture.id).isEmpty
+        capture.destination.canRetry(capture)
     }
 
     func retry(_ capture: Capture) async -> Capture {
