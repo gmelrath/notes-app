@@ -148,42 +148,10 @@ struct ComposeView: View {
     }
 
     private var actions: some View {
-        VStack(spacing: 8) {
-            HStack(spacing: 12) {
-                sendButton(.notion, enabled: model.canSend)
-                sendButton(.email, enabled: model.canSendByEmail)
-            }
-
-            if !model.hasEmailAddress {
-                Text("To send by email, add your address in Settings.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding()
-        .readableWidth()
-        .background(Color(.systemGroupedBackground))
-    }
-
-    private func sendButton(_ destination: Destination, enabled: Bool) -> some View {
-        Button {
+        SendButtonRow(canSend: model.canSend(to:), sending: model.sending, sent: model.sent) { destination in
             focusedField = nil
             Task { await model.send(to: destination) }
-        } label: {
-            Group {
-                if model.sending == destination {
-                    ProgressView().tint(.white)
-                } else if model.sent == destination {
-                    Label("Sent", systemImage: "checkmark")
-                } else {
-                    Label(destination.rawValue, systemImage: destination.systemImage)
-                }
-            }
-            .frame(maxWidth: .infinity)
         }
-        .buttonStyle(SendButtonStyle(tint: model.sent == destination ? .green : .campfireOrange))
-        .disabled(!enabled && model.sent != destination)
-        // For a hardware keyboard: ⌘↩ sends to Notion, ⇧⌘↩ by email.
-        .keyboardShortcut(.return, modifiers: destination == .notion ? .command : [.command, .shift])
     }
+
 }
