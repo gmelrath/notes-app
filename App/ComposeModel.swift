@@ -104,7 +104,7 @@ final class ComposeModel: ObservableObject {
         let body: String? = trimmedNote.isEmpty ? nil : trimmedNote
 
         if url == nil {
-            title = String(trimmedNote.prefix { $0 != "\n" }).trimmingCharacters(in: .whitespaces)
+            title = Capture.title(forNote: trimmedNote)
         } else if title.isEmpty {
             title = url.flatMap { LinkMetadata.title(fromAddress: $0) ?? $0.host() } ?? "Untitled"
         }

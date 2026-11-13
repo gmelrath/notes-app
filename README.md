@@ -31,6 +31,7 @@ ShareExtension/  The share card
 Shared/          Code used by both: capture model, history store, iCloud sync, link metadata, sending
 Config/          Info.plist and entitlements
 Design/          Source artwork for the app icon, and the script that prepares it
+Tests/           Automated tests of the shared logic (see Tests below)
 ```
 
 The app and the share card share storage through the App Group `group.com.gregmelrath.Capture`. The app was first called Capture, and its bundle IDs and App Group keep that name so the history already on the phone carries over.
@@ -59,6 +60,18 @@ You need Xcode and an Apple Developer Program membership, which keeps the app wo
 3. Plug your iPhone directly into the Mac (not through a hub), and turn on **Settings → Privacy & Security → Developer Mode**.
 4. Choose your iPhone as the run destination and press **▶ Run**.
 5. The first time, trust the developer on the phone: **Settings → General → VPN & Device Management**.
+
+## Tests
+
+The `Tests` folder holds automated tests of the app's core logic: duplicate matching, finding links, link titles and post detection, Notion formatting and length limits, notes, destination rules, and the history file and iCloud merging. They use Swift Testing and run in the iPhone simulator, never on a device, with no network.
+
+Run them with **⌘U** in Xcode, or:
+
+```bash
+xcodebuild test -project Campfire.xcodeproj -scheme Campfire -destination 'platform=iOS Simulator,name=iPhone 17'
+```
+
+Anything that needs the internet or a real account (sending to Notion or Resend, Apple's link previews, iCloud) is still checked by hand on a device.
 
 ## Keys
 

@@ -36,28 +36,7 @@ enum CaptureStore {
         guard !saved.isEmpty || !unreadable.isEmpty || !deleted.isEmpty else { return false }
         var changed = false
         update { file in
-            for capture in saved where !pending.contains(capture.id) {
-                if let index = file.captures.firstIndex(where: { $0.id == capture.id }) {
-                    if file.captures[index] != capture {
-                        file.captures[index] = capture
-                        changed = true
-                    }
-                } else {
-                    file.remove([capture.id])
-                    file.captures.append(capture)
-                    changed = true
-                }
-            }
-            for data in unreadable {
-                guard let entry = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                      let id = HistoryFile.id(of: entry), !pending.contains(id) else { continue }
-                if file.captures.contains(where: { $0.id == id }) { changed = true }
-                file.remove([id])
-                file.unreadable.append(entry)
-            }
-            let countBefore = file.captures.count
-            file.remove(deleted.subtracting(pending))
-            if file.captures.count != countBefore { changed = true }
+            changed = file.merge(saved: saved, unreadable: unreadable, deleted: deleted, keeping: pending)
         }
         AttachmentStore.remove(for: deleted.subtracting(pending))
         return changed
@@ -170,6 +149,34 @@ struct HistoryFile {
     mutating func remove(_ ids: Set<Capture.ID>) {
         captures.removeAll { ids.contains($0.id) }
         unreadable.removeAll { Self.id(of: $0).map(ids.contains) ?? false }
+    }
+
+    /// Applies changes from other devices; see CaptureStore.merge. Returns whether anything changed.
+    mutating func merge(saved: [Capture], unreadable: [Data], deleted: Set<Capture.ID>, keeping pending: Set<Capture.ID>) -> Bool {
+        var changed = false
+        for capture in saved where !pending.contains(capture.id) {
+            if let index = captures.firstIndex(where: { $0.id == capture.id }) {
+                if captures[index] != capture {
+                    captures[index] = capture
+                    changed = true
+                }
+            } else {
+                remove([capture.id])
+                captures.append(capture)
+                changed = true
+            }
+        }
+        for data in unreadable {
+            guard let entry = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let id = Self.id(of: entry), !pending.contains(id) else { continue }
+            if captures.contains(where: { $0.id == id }) { changed = true }
+            remove([id])
+            self.unreadable.append(entry)
+        }
+        let countBefore = captures.count
+        remove(deleted.subtracting(pending))
+        if captures.count != countBefore { changed = true }
+        return changed
     }
 
     static func id(of entry: [String: Any]) -> Capture.ID? {
