@@ -25,6 +25,12 @@ struct Capture: Codable, Identifiable, Hashable {
         url?.host()?.replacingOccurrences(of: "www.", with: "")
     }
 
+    /// The title of a note written without a link: its first line. The whole note stays the body.
+    static func title(forNote note: String) -> String {
+        String(note.trimmingCharacters(in: .whitespacesAndNewlines).prefix { $0 != "\n" })
+            .trimmingCharacters(in: .whitespaces)
+    }
+
     /// The link with tracking junk removed, so the same article shared twice is recognised.
     var matchKey: String? { url.map(Capture.matchKey(for:)) }
 
