@@ -56,8 +56,8 @@ struct ShareCardView: View {
 
     private var preview: some View {
         VStack(alignment: .leading, spacing: 8) {
-            if let host = model.item.url?.host() {
-                Label(host.replacingOccurrences(of: "www.", with: ""), systemImage: "link")
+            if let host = model.item.url?.displayHost {
+                Label(host, systemImage: "link")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

@@ -25,6 +25,15 @@ enum AppGroup {
     // Still named for Capture, the app's original name: changing it would orphan the history already on the phone.
     static let id = "group.com.gregmelrath.Capture"
     static var defaults: UserDefaults { UserDefaults(suiteName: id) ?? .standard }
+
+    /// The folder the app and the share card both use for the history and kept files.
+    /// It's always there when the app is signed with the App Group. If it ever isn't (a signing
+    /// mistake), each falls back to its own Documents folder: everything still works on its own,
+    /// but the app and the share card stop seeing each other's history.
+    static var folder: URL {
+        FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: id)
+            ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+    }
 }
 
 /// User settings, stored in the App Group so the share card can read them, and synced

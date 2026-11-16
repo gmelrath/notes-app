@@ -9,7 +9,6 @@ enum EmailClient {
         case notAccountAddress
         case attachmentsTooLarge
         case unreadableAttachment(String)
-        case offline
         case rejected(String)
 
         var errorDescription: String? {
@@ -19,7 +18,6 @@ enum EmailClient {
             case .notAccountAddress: "Resend can only send to the address you signed up with. Use that address in Settings."
             case .attachmentsTooLarge: "The files are too large to email (25 MB limit)."
             case .unreadableAttachment(let name): "Couldn't read \(name). Try sharing it again."
-            case .offline: "No internet connection. Try again when you're back online."
             case .rejected(let message): "Resend said: \(message)"
             }
         }
@@ -43,31 +41,23 @@ enum EmailClient {
             body["attachments"] = try encoded(attachments)
         }
 
-        var request = URLRequest(url: URL(string: "https://api.resend.com/emails")!, timeoutInterval: 60)
-        request.httpMethod = "POST"
-        request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        // Lets a retry of the same capture be recognised by Resend instead of sending twice.
-        request.setValue(capture.id.uuidString, forHTTPHeaderField: "Idempotency-Key")
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let response = try await ServiceRequest.post(
+            URL(string: "https://api.resend.com/emails")!, token: key, body: body,
+            // Lets a retry of the same capture be recognised by Resend instead of sending twice.
+            headers: ["Idempotency-Key": capture.id.uuidString], timeout: 60
+        )
+        if let error = error(for: response) { throw error }
+    }
 
-        let data: Data
-        let response: URLResponse
-        do {
-            (data, response) = try await URLSession.shared.data(for: request)
-        } catch let error as URLError where [.notConnectedToInternet, .networkConnectionLost, .timedOut].contains(error.code) {
-            throw EmailError.offline
-        }
-
-        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-        guard !(200..<300).contains(status) else { return }
-
-        let message = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["message"] as? String ?? ""
-        switch status {
-        case 401: throw EmailError.unauthorized
-        case 403 where message.localizedCaseInsensitiveContains("own email"): throw EmailError.notAccountAddress
-        case 403: throw EmailError.unauthorized
-        default: throw EmailError.rejected(message.isEmpty ? "error \(status)" : message)
+    /// What Resend's reply means, or nil when the email was accepted.
+    static func error(for response: ServiceResponse) -> EmailError? {
+        guard !response.succeeded else { return nil }
+        let message = response.message ?? ""
+        switch response.status {
+        case 401: return .unauthorized
+        case 403 where message.localizedCaseInsensitiveContains("own email"): return .notAccountAddress
+        case 403: return .unauthorized
+        default: return .rejected(message.isEmpty ? "error \(response.status)" : message)
         }
     }
 

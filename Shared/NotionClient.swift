@@ -7,7 +7,6 @@ enum NotionClient {
         case missingKey
         case unauthorized
         case databaseNotShared
-        case offline
         case rejected(String)
 
         var errorDescription: String? {
@@ -15,7 +14,6 @@ enum NotionClient {
             case .missingKey: "Notion isn't set up yet. Add your Notion key in Settings."
             case .unauthorized: "Notion didn't accept the key. Check your Notion key in Settings."
             case .databaseNotShared: "Campfire can’t see your Notion database. In Notion, add the Campfire connection to Things to Read…"
-            case .offline: "No internet connection. Try again when you're back online."
             case .rejected(let message): "Notion said: \(message)"
             }
         }
@@ -53,29 +51,20 @@ enum NotionClient {
             body["children"] = paragraphs(pageText)
         }
 
-        var request = URLRequest(url: URL(string: "https://api.notion.com/v1/pages")!, timeoutInterval: 15)
-        request.httpMethod = "POST"
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        request.setValue(apiVersion, forHTTPHeaderField: "Notion-Version")
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let response = try await ServiceRequest.post(
+            URL(string: "https://api.notion.com/v1/pages")!, token: token, body: body,
+            headers: ["Notion-Version": apiVersion], timeout: 15
+        )
+        if let error = error(for: response) { throw error }
+    }
 
-        let data: Data
-        let response: URLResponse
-        do {
-            (data, response) = try await URLSession.shared.data(for: request)
-        } catch let error as URLError where [.notConnectedToInternet, .networkConnectionLost, .timedOut].contains(error.code) {
-            throw NotionError.offline
-        }
-
-        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-        guard !(200..<300).contains(status) else { return }
-
-        let message = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["message"] as? String
-        switch status {
-        case 401: throw NotionError.unauthorized
-        case 403, 404: throw NotionError.databaseNotShared
-        default: throw NotionError.rejected(message ?? "error \(status)")
+    /// What Notion's reply means, or nil when the page was added.
+    static func error(for response: ServiceResponse) -> NotionError? {
+        guard !response.succeeded else { return nil }
+        switch response.status {
+        case 401: return .unauthorized
+        case 403, 404: return .databaseNotShared
+        default: return .rejected(response.message ?? "error \(response.status)")
         }
     }
 
