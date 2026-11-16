@@ -44,6 +44,16 @@ struct HistoryFileTests {
         #expect((written.first { $0["id"] as? String == tagged.uuidString }?["tags"] as? [String]) == ["ai"])
     }
 
+    @Test func officialAddressIsAKnownField() throws {
+        let id = UUID()
+        var file = try HistoryFile(data: json("[\(entry(id, extra: #","canonicalURL":"https://example.com/a""#))]"))
+        #expect(file.captures.first?.canonicalURL?.absoluteString == "https://example.com/a")
+        // Cleared on purpose, it must stay cleared rather than come back as an "unknown" field.
+        file.captures[0].canonicalURL = nil
+        let written = try #require(try JSONSerialization.jsonObject(with: file.encoded()) as? [[String: Any]])
+        #expect(written.first?["canonicalURL"] == nil)
+    }
+
     @Test func editsToKnownFieldsAreSaved() throws {
         let id = UUID()
         var file = try HistoryFile(data: json("[\(entry(id, extra: #","tags":["ai"]"#))]"))

@@ -39,6 +39,14 @@ struct PageTests {
         #expect(LinkMetadata.parse(html: SamplePages.titleTagOnly).title == "Plain Page Title")
     }
 
+    @Test func readsTheOfficialAddress() {
+        #expect(LinkMetadata.parse(html: SamplePages.post).canonical?.absoluteString
+                == "https://www.linkedin.com/posts/sam-rivera_most-teams-activity-7000000000000000001-AbCd")
+        #expect(LinkMetadata.parse(html: SamplePages.ogURLOnly).canonical?.absoluteString == "https://example.com/story?id=7&page=2")
+        #expect(LinkMetadata.parse(html: SamplePages.oddCanonical).canonical == nil)
+        #expect(LinkMetadata.parse(html: SamplePages.article).canonical == nil)
+    }
+
     @Test func keepsLineBreaksInPosts() {
         let post = LinkMetadata.parse(html: SamplePages.post).description ?? ""
         #expect(post.contains("five customer calls.\n\nWhat changed:\n\n- Fewer features & better ones"))

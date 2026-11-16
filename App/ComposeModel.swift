@@ -12,6 +12,8 @@ final class ComposeModel: ObservableObject {
     @Published private(set) var summary: String?
     /// Whether the link is a social post, whose whole text is in `summary`.
     private var isPost = false
+    /// The page's official address, known once it has loaded.
+    private var canonicalURL: URL?
     @Published private(set) var isFetchingTitle = false
     @Published private(set) var previous: Capture?
     @Published private(set) var errorMessage: String?
@@ -113,6 +115,7 @@ final class ComposeModel: ObservableObject {
             id: captureID,
             title: title,
             url: url,
+            canonicalURL: url == nil ? nil : canonicalURL,
             summary: summary,
             note: body,
             isPost: url != nil && isPost,
@@ -129,6 +132,7 @@ final class ComposeModel: ObservableObject {
         fetchedTitle = ""
         summary = nil
         isPost = false
+        canonicalURL = nil
         previous = nil
         errorMessage = nil
         sent = nil
@@ -138,7 +142,7 @@ final class ComposeModel: ObservableObject {
     /// Checks the history for an earlier send of this link, as on the share card. Called again
     /// when your other device's history arrives, so a link sent there moments ago is flagged.
     func refreshPrevious() {
-        previous = url.flatMap { CaptureStore.previous(matching: $0, excluding: captureID) }
+        previous = CaptureStore.previous(matching: [url, canonicalURL].compactMap { $0 }, excluding: captureID)
     }
 
     // MARK: - Link handling
@@ -147,6 +151,7 @@ final class ComposeModel: ObservableObject {
         fetchTask?.cancel()
         summary = nil
         isPost = false
+        canonicalURL = nil
         errorMessage = nil
         if title == fetchedTitle { title = "" }
         fetchedTitle = ""
@@ -168,6 +173,9 @@ final class ComposeModel: ObservableObject {
             isFetchingTitle = false
             summary = details.summary
             isPost = details.isPost
+            canonicalURL = details.canonical
+            // The official address can match an earlier send made under a different link.
+            refreshPrevious()
             // Never replaces a title you've typed.
             if let fetched = details.title, title.isEmpty {
                 title = fetched
