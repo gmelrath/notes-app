@@ -10,6 +10,8 @@ final class ShareCardModel: ObservableObject {
     @Published private(set) var summary: String?
     /// Whether the link is a social post, whose whole text is in `summary`.
     private var isPost = false
+    /// The page's official address, known once it has loaded.
+    private var canonicalURL: URL?
     @Published var note = ""
     @Published private(set) var previous: Capture?
     @Published private(set) var errorMessage: String?
@@ -58,6 +60,7 @@ final class ShareCardModel: ObservableObject {
             id: captureID,
             title: displayTitle,
             url: item.url,
+            canonicalURL: item.url == nil ? nil : canonicalURL,
             summary: summary,
             note: destination.includesShareCardNote && !trimmedNote.isEmpty ? trimmedNote : nil,
             text: item.text,
@@ -105,15 +108,13 @@ final class ShareCardModel: ObservableObject {
 
         item = result
         title = defaultTitle(for: result)
-        previous = result.url.flatMap { CaptureStore.previous(matching: $0) }
+        refreshPrevious()
         isLoading = false
 
         // Another device may have sent this link since this one last synced.
-        if let url = result.url {
+        if result.url != nil {
             Task {
-                if await CloudHistory.shared.sync() {
-                    previous = CaptureStore.previous(matching: url, excluding: captureID)
-                }
+                if await CloudHistory.shared.sync() { refreshPrevious() }
             }
         }
 
@@ -127,7 +128,15 @@ final class ShareCardModel: ObservableObject {
             }
             summary = details.summary
             isPost = details.isPost
+            canonicalURL = details.canonical
+            // The official address can match an earlier send made under a different link.
+            refreshPrevious()
         }
+    }
+
+    /// Checks the history for an earlier send of this page, under any of its addresses.
+    private func refreshPrevious() {
+        previous = CaptureStore.previous(matching: [item.url, canonicalURL].compactMap { $0 }, excluding: captureID)
     }
 
     private func defaultTitle(for item: SharedItem) -> String {

@@ -42,10 +42,12 @@ enum CaptureStore {
         return changed
     }
 
-    /// The most recent earlier capture of the same link, if there is one.
-    static func previous(matching url: URL, excluding id: Capture.ID? = nil) -> Capture? {
-        let key = Capture.matchKey(for: url)
-        return load().first { $0.id != id && $0.matchKey == key }
+    /// The most recent earlier capture of the same page, if there is one. `urls` are every address
+    /// known for it (the shared link, and its official address once the page has loaded).
+    static func previous(matching urls: [URL], excluding id: Capture.ID? = nil) -> Capture? {
+        let keys = Set(urls.map(Capture.matchKey(for:)))
+        guard !keys.isEmpty else { return nil }
+        return load().first { $0.id != id && !$0.matchKeys.isDisjoint(with: keys) }
     }
 
     // MARK: - File access
@@ -139,7 +141,8 @@ struct HistoryFile {
 
     /// Every field this version saves, found by saving an entry with all of them filled in.
     private static let knownFields: Set<String> = {
-        let full = Capture(title: "", url: URL(string: "https://example.com"), summary: "", note: "", text: "",
+        let full = Capture(title: "", url: URL(string: "https://example.com"), canonicalURL: URL(string: "https://example.com"),
+                           summary: "", note: "", text: "",
                            destination: .notion, status: .failed, errorMessage: "")
         let entry = (try? CaptureStore.encoder.encode(full))
             .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] } ?? [:]

@@ -8,6 +8,7 @@ enum SamplePages {
     static let post = """
     <html><head>
     <title>Most teams ship features nobody asked for | Sam Rivera</title>
+    <link rel="canonical" href="https://www.linkedin.com/posts/sam-rivera_most-teams-activity-7000000000000000001-AbCd">
     <meta property="og:title" content="Most teams ship features nobody asked for. Here is how we stopped: we started every… | Sam Rivera | 12 comments">
     <meta property="og:description" content="Most teams ship features nobody asked for. Here is how we stopped: we started every project with five customer calls.
 
@@ -44,6 +45,17 @@ enum SamplePages {
     <meta name="description" content="A practical walkthrough of the five changes that mattered, and the ten that didn’t.">
     </head></html>
     """
+
+    /// A page whose official address is given only as og:url, with an encoded "&".
+    static let ogURLOnly = """
+    <html><head>
+    <meta property="og:url" content="https://example.com/story?id=7&amp;page=2">
+    <meta property="og:title" content="A Story">
+    </head></html>
+    """
+
+    /// A page whose canonical link isn't a web address.
+    static let oddCanonical = #"<html><head><link rel="canonical" href="android-app://com.example/x"></head></html>"#
 
     /// A page with only a title tag.
     static let titleTagOnly = "<html><head><title>  Plain   Page\nTitle </title></head></html>"

@@ -5,6 +5,8 @@ import LinkPresentation
 struct LinkMetadata {
     var title: String?
     var description: String?
+    /// The page's own official ("canonical") address, which several share links can lead to.
+    var canonical: URL?
 
     /// Reads the page itself, then, if that gives no title (the site blocked the request, or sets
     /// its title only once the page has loaded), asks Apple's link-preview service, which Messages uses.
@@ -27,7 +29,10 @@ struct LinkMetadata {
         }
         // The <head> is near the top; no need to scan a huge page.
         let html = String(decoding: data.prefix(600_000), as: UTF8.self)
-        return parse(html: html)
+        var metadata = parse(html: html)
+        // Without one, where a short link ended up still tells us more than the short link.
+        if metadata.canonical == nil, let final = response.url, final != url { metadata.canonical = final }
+        return metadata
     }
 
     static func parse(html: String) -> LinkMetadata {
@@ -43,8 +48,16 @@ struct LinkMetadata {
         let title = meta["og:title"] ?? meta["twitter:title"] ?? titleTag
         let description = meta["og:description"] ?? meta["twitter:description"] ?? meta["description"]
 
+        let canonicalLink = matches(of: #"<link\b[^>]*>"#, in: html)
+            .map(attributes(in:))
+            .first { ($0["rel"] ?? "").lowercased().split(separator: " ").contains("canonical") }?["href"]
+        let canonical = [canonicalLink, meta["og:url"]]
+            .compactMap { $0.flatMap { URL(string: clean($0)) } }
+            .first { $0.scheme == "http" || $0.scheme == "https" }
+
         // Posts arrive with their paragraphs in the description; keep the line breaks.
-        return LinkMetadata(title: title.map { clean($0) }, description: description.map { clean($0, keepingLineBreaks: true) })
+        return LinkMetadata(title: title.map { clean($0) }, description: description.map { clean($0, keepingLineBreaks: true) },
+                            canonical: canonical)
     }
 
     @MainActor
@@ -138,6 +151,8 @@ struct LinkDetails {
     var title: String?
     var summary: String?
     var isPost = false
+    /// The page's official address, used to spot the same page shared under another link.
+    var canonical: URL?
 }
 
 extension LinkMetadata {
@@ -148,7 +163,7 @@ extension LinkMetadata {
         let title = [metadata.suggestedTitle, sharedTitle, title(fromAddress: url)]
             .compactMap { $0 }
             .first { !$0.isEmpty }
-        return LinkDetails(title: title, summary: metadata.description, isPost: metadata.isPost)
+        return LinkDetails(title: title, summary: metadata.description, isPost: metadata.isPost, canonical: metadata.canonical)
     }
 
     /// A web link typed or pasted on its own, with or without "https://", or the first web link
