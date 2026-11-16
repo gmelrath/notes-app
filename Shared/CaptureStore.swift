@@ -3,11 +3,7 @@ import Foundation
 /// The history log, kept as a JSON file in the App Group so the share card and the app share it.
 /// Reads and writes are coordinated because the card and the app can run at the same time.
 enum CaptureStore {
-    private static var fileURL: URL {
-        let folder = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: AppGroup.id)
-            ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        return folder.appendingPathComponent("captures.json")
-    }
+    private static var fileURL: URL { AppGroup.folder.appendingPathComponent("captures.json") }
 
     /// Newest first.
     static func load() -> [Capture] {

@@ -24,9 +24,7 @@ struct Capture: Codable, Identifiable, Hashable {
     var status: Status
     var errorMessage: String?
 
-    var host: String? {
-        url?.host()?.replacingOccurrences(of: "www.", with: "")
-    }
+    var host: String? { url?.displayHost }
 
     /// The title of a note written without a link: its first line. The whole note stays the body.
     static func title(forNote note: String) -> String {

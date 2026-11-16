@@ -27,3 +27,11 @@ extension Capture {
         return date.formatted(sameYear ? .dateTime.month(.abbreviated).day() : .dateTime.month(.abbreviated).day().year())
     }
 }
+
+extension URL {
+    /// The site's name for display: "example.com" for "https://www.example.com/post".
+    var displayHost: String? {
+        guard let host = host(), !host.isEmpty else { return nil }
+        return host.hasPrefix("www.") ? String(host.dropFirst(4)) : host
+    }
+}

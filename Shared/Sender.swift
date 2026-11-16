@@ -26,29 +26,28 @@ enum Sender {
 
 /// Copies of shared files kept in the App Group after a failed email, so it can be retried from History.
 enum AttachmentStore {
-    private static func folder(for id: Capture.ID) -> URL? {
-        FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: AppGroup.id)?
+    private static func folder(for id: Capture.ID) -> URL {
+        AppGroup.folder
             .appendingPathComponent("Attachments", isDirectory: true)
             .appendingPathComponent(id.uuidString, isDirectory: true)
     }
 
     static func save(_ files: [URL], for id: Capture.ID) {
-        guard let folder = folder(for: id) else { return }
-        try? FileManager.default.removeItem(at: folder)
-        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let directory = folder(for: id)
+        try? FileManager.default.removeItem(at: directory)
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         for file in files {
-            try? FileManager.default.copyItem(at: file, to: folder.appendingPathComponent(file.lastPathComponent))
+            try? FileManager.default.copyItem(at: file, to: directory.appendingPathComponent(file.lastPathComponent))
         }
     }
 
     static func files(for id: Capture.ID) -> [URL] {
-        guard let folder = folder(for: id) else { return [] }
-        return (try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)) ?? []
+        (try? FileManager.default.contentsOfDirectory(at: folder(for: id), includingPropertiesForKeys: nil)) ?? []
     }
 
     static func remove(for ids: some Sequence<Capture.ID>) {
         for id in ids {
-            if let folder = folder(for: id) { try? FileManager.default.removeItem(at: folder) }
+            try? FileManager.default.removeItem(at: folder(for: id))
         }
     }
 }
