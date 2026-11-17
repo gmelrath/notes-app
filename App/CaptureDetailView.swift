@@ -63,7 +63,7 @@ struct CaptureDetailView: View {
                         }
                         .disabled(isRetrying)
                     } else {
-                        Text("The shared files are no longer on this phone. Share them again to retry.")
+                        Text(capture.missingFilesMessage(on: UIDevice.current.model))
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                     }

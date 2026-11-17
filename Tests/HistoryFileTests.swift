@@ -54,6 +54,17 @@ struct HistoryFileTests {
         #expect(written.first?["canonicalURL"] == nil)
     }
 
+    @Test func sendingDeviceIsAKnownField() throws {
+        let id = UUID()
+        var file = try HistoryFile(data: json("[\(entry(id, extra: #","sentFrom":"iPad""#))]"))
+        #expect(file.captures.first?.sentFrom == "iPad")
+        file.captures[0].sentFrom = nil
+        let written = try #require(try JSONSerialization.jsonObject(with: file.encoded()) as? [[String: Any]])
+        #expect(written.first?["sentFrom"] == nil)
+        // Entries saved before this field existed load without it.
+        #expect(try HistoryFile(data: json("[\(entry(UUID()))]")).captures.first?.sentFrom == nil)
+    }
+
     @Test func editsToKnownFieldsAreSaved() throws {
         let id = UUID()
         var file = try HistoryFile(data: json("[\(entry(id, extra: #","tags":["ai"]"#))]"))

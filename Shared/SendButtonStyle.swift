@@ -2,8 +2,10 @@ import SwiftUI
 
 extension Color {
     /// The app's one orange, #FF7C00: the accent colour in the asset catalogue, used for the send
-    /// buttons and, as the accent, for icons, links and controls.
-    static let campfireOrange = Color.accentColor
+    /// buttons and, as the accent, for icons, links and controls. Read by name rather than as
+    /// `Color.accentColor`, because the share card runs inside another app's window and would get
+    /// that app's accent (often the system blue) instead of ours.
+    static let campfireOrange = Color("AccentColor")
 }
 
 /// The Notion and Email buttons: orange when ready, a lighter orange while pressed, and a gray

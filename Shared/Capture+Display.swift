@@ -17,6 +17,18 @@ extension Capture {
         }
     }
 
+    /// Why Try again isn't offered for this failed email with files, as shown on `device`
+    /// ("iPhone", "iPad"). Kept copies of shared files stay on the device that sent the email.
+    func missingFilesMessage(on device: String) -> String {
+        guard let sentFrom else {
+            return "The files are kept on the device that sent this. Try again there, or share them again."
+        }
+        if sentFrom == device {
+            return "The files are no longer on this \(device). Share them again to try."
+        }
+        return "The files are kept on your \(sentFrom). Try again there, or share them again."
+    }
+
     /// "today at 5:04 PM", "yesterday at 9:12 AM", or "Oct 12".
     var friendlyDate: String {
         let calendar = Calendar.current

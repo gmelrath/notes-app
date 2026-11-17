@@ -118,6 +118,7 @@ final class ComposeModel: ObservableObject {
             canonicalURL: url == nil ? nil : canonicalURL,
             summary: summary,
             note: body,
+            sentFrom: UIDevice.current.model,
             isPost: url != nil && isPost,
             destination: destination,
             status: .failed
