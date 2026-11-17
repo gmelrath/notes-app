@@ -39,9 +39,9 @@ enum AppGroup {
 /// User settings, stored in the App Group so the share card can read them, and synced
 /// between devices through iCloud along with the history.
 enum AppSettings {
-    private static let emailKey = "emailAddress"
-    private static let changedAtKey = "settingsChangedAt"
-    private static let pendingKey = "settingsPendingUpload"
+    private static let emailKey = StoredName.emailAddress.rawValue
+    private static let changedAtKey = StoredName.settingsChangedAt.rawValue
+    private static let pendingKey = StoredName.settingsPendingUpload.rawValue
 
     static var emailAddress: String? {
         get {
