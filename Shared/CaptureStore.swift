@@ -138,7 +138,7 @@ struct HistoryFile {
     /// Every field this version saves, found by saving an entry with all of them filled in.
     private static let knownFields: Set<String> = {
         let full = Capture(title: "", url: URL(string: "https://example.com"), canonicalURL: URL(string: "https://example.com"),
-                           summary: "", note: "", text: "",
+                           summary: "", note: "", text: "", sentFrom: "",
                            destination: .notion, status: .failed, errorMessage: "")
         let entry = (try? CaptureStore.encoder.encode(full))
             .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] } ?? [:]

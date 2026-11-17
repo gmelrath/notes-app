@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 import UniformTypeIdentifiers
 
 @MainActor
@@ -65,6 +66,7 @@ final class ShareCardModel: ObservableObject {
             note: destination.includesShareCardNote && !trimmedNote.isEmpty ? trimmedNote : nil,
             text: item.text,
             fileNames: item.files.map(\.name),
+            sentFrom: UIDevice.current.model,
             isPost: item.url != nil && isPost,
             destination: destination,
             status: .failed

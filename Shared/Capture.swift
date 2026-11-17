@@ -18,6 +18,8 @@ struct Capture: Codable, Identifiable, Hashable {
     var note: String?
     var text: String?
     var fileNames: [String] = []
+    /// The kind of device that sent it ("iPhone", "iPad"), so Sent can say where kept files are.
+    var sentFrom: String?
     /// A social post: `summary` holds the whole post, which Notion puts in the page body.
     var isPost = false
     var destination: Destination
@@ -92,6 +94,7 @@ extension Capture {
         note = try container.decodeIfPresent(String.self, forKey: .note)
         text = try container.decodeIfPresent(String.self, forKey: .text)
         fileNames = try container.decodeIfPresent([String].self, forKey: .fileNames) ?? []
+        sentFrom = try container.decodeIfPresent(String.self, forKey: .sentFrom)
         isPost = try container.decodeIfPresent(Bool.self, forKey: .isPost) ?? false
         status = try container.decodeIfPresent(Status.self, forKey: .status) ?? .failed
         errorMessage = try container.decodeIfPresent(String.self, forKey: .errorMessage)
