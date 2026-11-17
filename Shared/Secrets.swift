@@ -5,6 +5,10 @@ import Security
 /// so a copy of the app carries no keys. They're entered in Settings, shared with the share card
 /// through a Keychain group, and carried to your other devices by iCloud Keychain.
 enum Secrets {
+    /// The Keychain's name for the app's keys. Like the key names below, it must never change
+    /// (see StoredNames.swift), or the saved keys can't be found.
+    static let service = "Campfire keys"
+
     enum Key: String, CaseIterable {
         case notionToken = "NotionToken"
         case resendAPIKey = "ResendAPIKey"
@@ -46,7 +50,7 @@ enum Secrets {
     private static func baseQuery(for key: Key) -> [String: Any] {
         var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: "Campfire keys",
+            kSecAttrService as String: service,
             kSecAttrAccount as String: key.rawValue,
             kSecUseDataProtectionKeychain as String: true,
         ]

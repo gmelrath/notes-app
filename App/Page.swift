@@ -49,7 +49,7 @@ extension Page where Actions == EmptyView {
 enum TitleFont: String, CaseIterable, Identifiable {
     case sansSerif, serif
 
-    static let storageKey = "titleFont"
+    static let storageKey = StoredName.titleFont.rawValue
     var id: Self { self }
 
     var name: String {

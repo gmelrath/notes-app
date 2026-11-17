@@ -9,7 +9,7 @@ actor CloudHistory {
     static let shared = CloudHistory()
 
     private let container = CKContainer(identifier: "iCloud.com.gregmelrath.Campfire")
-    private let zoneID = CKRecordZone.ID(zoneName: "History")
+    private let zoneID = CKRecordZone.ID(zoneName: CloudName.zone)
     private var isSyncing = false
     private var syncAgain = false
 
@@ -51,7 +51,7 @@ actor CloudHistory {
             _ = try zones.saveResults[zoneID]?.get()
 
             // Lets iCloud wake the app when another device changes something.
-            let subscription = CKDatabaseSubscription(subscriptionID: "history")
+            let subscription = CKDatabaseSubscription(subscriptionID: CloudName.subscription)
             let info = CKSubscription.NotificationInfo()
             info.shouldSendContentAvailable = true
             subscription.notificationInfo = info
@@ -130,7 +130,7 @@ actor CloudHistory {
                     settings = modification.record
                 } else if let capture = capture(from: modification.record) {
                     saved.append(capture)
-                } else if let payload = modification.record["payload"] as? Data {
+                } else if let payload = modification.record[CloudName.Capture.payload] as? Data {
                     // Saved by a newer version of Campfire: kept in the file for when this one is updated.
                     unreadable.append(payload)
                 }
@@ -143,8 +143,8 @@ actor CloudHistory {
         }
 
         var changed = CaptureStore.merge(saved: saved, unreadable: unreadable, deleted: deleted, keeping: CloudQueue.pendingIDs)
-        if let settings, let changedAt = settings["changedAt"] as? Date {
-            changed = AppSettings.applyFromCloud(email: settings["email"] as? String, changedAt: changedAt) || changed
+        if let settings, let changedAt = settings[CloudName.Settings.changedAt] as? Date {
+            changed = AppSettings.applyFromCloud(email: settings[CloudName.Settings.email] as? String, changedAt: changedAt) || changed
         }
         saveToken(token)
         return changed
@@ -180,14 +180,14 @@ actor CloudHistory {
     /// Each entry is stored whole, as JSON, so new fields sync without changing the iCloud schema.
     private func record(for capture: Capture) -> CKRecord? {
         guard let data = try? CaptureStore.encoder.encode(capture) else { return nil }
-        let record = CKRecord(recordType: "Capture", recordID: recordID(for: capture.id))
-        record["payload"] = data as NSData
-        record["date"] = capture.date as NSDate
+        let record = CKRecord(recordType: CloudName.Capture.type, recordID: recordID(for: capture.id))
+        record[CloudName.Capture.payload] = data as NSData
+        record[CloudName.Capture.date] = capture.date as NSDate
         return record
     }
 
     private func capture(from record: CKRecord) -> Capture? {
-        guard record.recordType == "Capture", let data = record["payload"] as? Data else { return nil }
+        guard record.recordType == CloudName.Capture.type, let data = record[CloudName.Capture.payload] as? Data else { return nil }
         return try? CaptureStore.decoder.decode(Capture.self, from: data)
     }
 
@@ -207,13 +207,13 @@ actor CloudHistory {
     // MARK: - Settings
 
     /// Settings travel as one record in the same zone, so they sync as quickly as the history.
-    private static let settingsType = "Settings"
+    private static let settingsType = CloudName.Settings.type
 
     private func uploadSettings() async throws {
         guard let pending = AppSettings.pendingUpload else { return }
-        let record = CKRecord(recordType: Self.settingsType, recordID: CKRecord.ID(recordName: "settings", zoneID: zoneID))
-        record["email"] = pending.email as NSString?
-        record["changedAt"] = pending.changedAt as NSDate
+        let record = CKRecord(recordType: Self.settingsType, recordID: CKRecord.ID(recordName: CloudName.Settings.recordName, zoneID: zoneID))
+        record[CloudName.Settings.email] = pending.email as NSString?
+        record[CloudName.Settings.changedAt] = pending.changedAt as NSDate
         let results = try await withDatabase { database in
             try await database.modifyRecords(saving: [record], deleting: [], savePolicy: .allKeys, atomically: false)
         }
@@ -223,16 +223,16 @@ actor CloudHistory {
     }
 
     private enum Keys {
-        static let ready = "cloudReady"
-        static let tokenPrefix = "cloudToken."
+        static let ready = StoredName.cloudReady.rawValue
+        static let tokenPrefix = StoredName.cloudTokenPrefix
     }
 }
 
 /// Local changes waiting to reach iCloud. Kept in the App Group, so if the share card closes
 /// before its upload finishes, the app sends it later.
 enum CloudQueue {
-    private static let savesKey = "cloudPendingSaves"
-    private static let deletesKey = "cloudPendingDeletes"
+    private static let savesKey = StoredName.cloudPendingSaves.rawValue
+    private static let deletesKey = StoredName.cloudPendingDeletes.rawValue
 
     static var saves: [Capture.ID] { ids(in: savesKey) }
     static var deletes: [Capture.ID] { ids(in: deletesKey) }
