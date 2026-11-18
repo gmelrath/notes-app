@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct HistoryView: View {
-    @StateObject private var model = HistoryModel()
+    @EnvironmentObject private var model: HistoryModel
     @State private var searchText = ""
     @Environment(\.scenePhase) private var scenePhase
 
@@ -25,9 +25,6 @@ struct HistoryView: View {
                 list
             }
         }
-        .navigationDestination(for: Capture.self) { capture in
-            CaptureDetailView(capture: capture, model: model)
-        }
         .onChange(of: scenePhase, initial: true) {
             if scenePhase == .active { model.reload() }
         }
@@ -39,7 +36,7 @@ struct HistoryView: View {
     private var list: some View {
         List {
             ForEach(filtered) { capture in
-                NavigationLink(value: capture) {
+                NavigationLink(value: Screen.details(capture.id)) {
                     CaptureRow(capture: capture)
                 }
             }
