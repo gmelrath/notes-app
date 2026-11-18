@@ -34,6 +34,8 @@ Design/          Source artwork for the app icon, and the script that prepares i
 Tests/           Automated tests of the shared logic (see Tests below)
 ```
 
+**Adding a screen:** build it on `Page` (in `App/Page.swift`), as Campfire, Sent, Details and Settings do. It draws the shared header inside the iPad content column, hides iOS's own top bar, and turns swiping back from the left edge on for that screen.
+
 The app and the share card share storage through the App Group `group.com.gregmelrath.Capture`. The app was first called Capture, and its bundle IDs and App Group keep that name so the history already on the phone carries over.
 
 ## App icon

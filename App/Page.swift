@@ -3,6 +3,9 @@ import SwiftUI
 /// The layout every screen shares: a large title on the left, its action icons on the right,
 /// and the content below, all on the light gray background. On iPad the header sits in the
 /// same centred column as the content, rather than spanning the whole window.
+///
+/// Every screen uses it, including ones pushed from another screen. It hides iOS's own top bar,
+/// and a screen that skips it gets that bar back, looking out of place.
 struct Page<Actions: View, Content: View>: View {
     let title: String
     var showsBack = false
@@ -36,6 +39,7 @@ struct Page<Actions: View, Content: View>: View {
         .readableWidth()
         .background(Color(.systemGroupedBackground))
         .toolbar(.hidden, for: .navigationBar)
+        .background(SwipeBack().frame(width: 0, height: 0))
     }
 }
 
@@ -77,14 +81,26 @@ extension View {
     }
 }
 
-// Hiding the navigation bar also turns off swiping from the left edge to go back; this turns it on again.
-extension UINavigationController: @retroactive UIGestureRecognizerDelegate {
-    override open func viewDidLoad() {
-        super.viewDidLoad()
-        interactivePopGestureRecognizer?.delegate = self
-    }
+/// Hiding iOS's top bar also switches off swiping in from the left edge to go back. This turns it
+/// back on, for the navigation this page belongs to only, without changing how any other screen
+/// behaves. If a future iOS stops it finding that navigation, swiping back simply stays off; the
+/// back arrow still works.
+private struct SwipeBack: UIViewControllerRepresentable {
+    func makeUIViewController(context: Context) -> Controller { Controller() }
+    func updateUIViewController(_ controller: Controller, context: Context) {}
 
-    public func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
-        viewControllers.count > 1
+    final class Controller: UIViewController, UIGestureRecognizerDelegate {
+        // Each page re-enables it as it appears, including when you come back to it.
+        override func viewDidAppear(_ animated: Bool) {
+            super.viewDidAppear(animated)
+            guard let gesture = navigationController?.interactivePopGestureRecognizer else { return }
+            gesture.delegate = self
+            gesture.isEnabled = true
+        }
+
+        // Only when there's somewhere to go back to: never on the first screen.
+        func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+            (navigationController?.viewControllers.count ?? 0) > 1
+        }
     }
 }
