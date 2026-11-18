@@ -34,28 +34,81 @@ enum NotionClient {
             throw NotionError.missingKey
         }
 
-        var properties: [String: Any] = [
-            "Title": ["title": richText(capture.title)],
-        ]
+        var found = try await columns(token: token, dataSourceID: dataSourceID, refresh: false)
+        var response = try await post(pageBody(for: capture, columns: found, dataSourceID: dataSourceID), token: token)
+        // The remembered columns may be out of date (one deleted or changed type): look again, once.
+        if isColumnProblem(response) {
+            found = try await columns(token: token, dataSourceID: dataSourceID, refresh: true)
+            response = try await post(pageBody(for: capture, columns: found, dataSourceID: dataSourceID), token: token)
+        }
+        if let error = error(for: response) { throw error }
+    }
+
+    private static func post(_ body: [String: Any], token: String) async throws -> ServiceResponse {
+        try await ServiceRequest.post(
+            URL(string: "https://api.notion.com/v1/pages")!, token: token, body: body,
+            headers: ["Notion-Version": apiVersion], timeout: 15
+        )
+    }
+
+    /// The database's columns: remembered, or looked up in Notion (and then remembered).
+    private static func columns(token: String, dataSourceID: String, refresh: Bool) async throws -> NotionColumns {
+        if !refresh, let saved = NotionColumnStore.load(for: dataSourceID) { return saved }
+        let response = try await ServiceRequest.get(
+            URL(string: "https://api.notion.com/v1/data_sources/\(dataSourceID)")!, token: token,
+            headers: ["Notion-Version": apiVersion], timeout: 15
+        )
+        if let error = error(for: response) { throw error }
+        guard let description = try? JSONSerialization.jsonObject(with: response.data) as? [String: Any],
+              let properties = description["properties"] as? [String: Any],
+              let columns = NotionColumns.pick(from: properties) else {
+            throw NotionError.rejected("couldn't read the database's columns")
+        }
+        NotionColumnStore.save(columns, for: dataSourceID)
+        return columns
+    }
+
+    /// Whether Notion turned the page down because of the columns it was sent to.
+    static func isColumnProblem(_ response: ServiceResponse) -> Bool {
+        response.status == 400 && (response.message ?? "").localizedCaseInsensitiveContains("propert")
+    }
+
+    /// The new page: its columns, by ID, and its body. When the database has no Summary or URL
+    /// column, that information goes in the page body instead of being lost.
+    static func pageBody(for capture: Capture, columns: NotionColumns, dataSourceID: String) -> [String: Any] {
+        var properties: [String: Any] = [columns.title: ["title": richText(capture.title)]]
+        var blocks: [[String: Any]] = []
+
         if let url = capture.url {
-            properties["URL"] = ["url": url.absoluteString]
+            if let column = columns.url {
+                properties[column] = ["url": url.absoluteString]
+            } else {
+                blocks.append(linkParagraph(url))
+            }
         }
-        if let summary = summary(for: capture), !summary.isEmpty {
-            properties["Summary"] = ["rich_text": richText(summary)]
+
+        let summary = summary(for: capture).flatMap { $0.isEmpty ? nil : $0 }
+        let pageText = pageText(for: capture)
+        if let summary, let column = columns.summary {
+            properties[column] = ["rich_text": richText(summary)]
         }
+        if let pageText {
+            blocks += paragraphs(pageText)
+        } else if let summary, columns.summary == nil {
+            blocks += paragraphs(summary)
+        }
+
         var body: [String: Any] = [
             "parent": ["type": "data_source_id", "data_source_id": dataSourceID],
             "properties": properties,
         ]
-        if let pageText = pageText(for: capture) {
-            body["children"] = paragraphs(pageText)
-        }
+        if !blocks.isEmpty { body["children"] = Array(blocks.prefix(blockLimit)) }
+        return body
+    }
 
-        let response = try await ServiceRequest.post(
-            URL(string: "https://api.notion.com/v1/pages")!, token: token, body: body,
-            headers: ["Notion-Version": apiVersion], timeout: 15
-        )
-        if let error = error(for: response) { throw error }
+    private static func linkParagraph(_ url: URL) -> [String: Any] {
+        let text: [String: Any] = ["content": url.absoluteString, "link": ["url": url.absoluteString]]
+        return ["object": "block", "type": "paragraph", "paragraph": ["rich_text": [["text": text]]]]
     }
 
     /// What Notion's reply means, or nil when the page was added.

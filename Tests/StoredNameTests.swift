@@ -11,7 +11,7 @@ struct StoredNameTests {
         #expect(StoredName.allCases.map(\.rawValue) == [
             "emailAddress", "settingsChangedAt", "settingsPendingUpload",
             "cloudReady", "cloudPendingSaves", "cloudPendingDeletes",
-            "titleFont",
+            "titleFont", "notionColumns",
         ])
         #expect(StoredName.cloudTokenPrefix == "cloudToken.")
         #expect(TitleFont.storageKey == "titleFont")
