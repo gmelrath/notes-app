@@ -4,6 +4,8 @@ import Foundation
 struct ServiceResponse {
     let status: Int
     let message: String?
+    /// The whole reply, for requests that read something back.
+    var data = Data()
 
     var succeeded: Bool { (200..<300).contains(status) }
 }
@@ -32,10 +34,20 @@ enum ServiceRequest {
     ) async throws -> ServiceResponse {
         var request = URLRequest(url: url, timeoutInterval: timeout)
         request.httpMethod = "POST"
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        for (name, value) in headers { request.setValue(value, forHTTPHeaderField: name) }
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        return try await send(request, token: token, headers: headers)
+    }
+
+    /// Reads something from the service, such as a Notion database's description.
+    static func get(_ url: URL, token: String, headers: [String: String] = [:], timeout: TimeInterval) async throws -> ServiceResponse {
+        try await send(URLRequest(url: url, timeoutInterval: timeout), token: token, headers: headers)
+    }
+
+    private static func send(_ request: URLRequest, token: String, headers: [String: String]) async throws -> ServiceResponse {
+        var request = request
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        for (name, value) in headers { request.setValue(value, forHTTPHeaderField: name) }
 
         let data: Data
         let response: URLResponse
@@ -44,7 +56,7 @@ enum ServiceRequest {
         } catch let error as URLError where [.notConnectedToInternet, .networkConnectionLost, .timedOut].contains(error.code) {
             throw ServiceError.offline
         }
-        return ServiceResponse(status: (response as? HTTPURLResponse)?.statusCode ?? 0, message: message(in: data))
+        return ServiceResponse(status: (response as? HTTPURLResponse)?.statusCode ?? 0, message: message(in: data), data: data)
     }
 
     /// The "message" both Notion and Resend put in an error reply, if there is one.

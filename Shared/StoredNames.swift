@@ -16,6 +16,8 @@ enum StoredName: String, CaseIterable {
     case cloudPendingDeletes
     // Appearance, in the app's own settings.
     case titleFont
+    // Notion, in the App Group: the database's columns, last looked up.
+    case notionColumns
 
     /// Each process keeps its own iCloud change token, under this prefix plus its bundle ID.
     static let cloudTokenPrefix = "cloudToken."
