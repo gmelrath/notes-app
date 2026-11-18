@@ -9,6 +9,18 @@ struct CaptureDetailView: View {
     @Environment(\.openURL) private var openURL
 
     var body: some View {
+        Page("Details", showsBack: true) {
+            details
+        }
+        .confirmationDialog("Delete from history?", isPresented: $confirmDelete, titleVisibility: .visible) {
+            Button("Delete", role: .destructive) {
+                model.delete([capture.id])
+                dismiss()
+            }
+        }
+    }
+
+    private var details: some View {
         List {
             Section {
                 VStack(alignment: .leading, spacing: 8) {
@@ -99,12 +111,6 @@ struct CaptureDetailView: View {
                 Text("This removes it from Campfire on all your devices. Anything already in Notion or your inbox stays there.")
             }
         }
-        .navigationBarTitleDisplayMode(.inline)
-        .confirmationDialog("Delete from history?", isPresented: $confirmDelete, titleVisibility: .visible) {
-            Button("Delete", role: .destructive) {
-                model.delete([capture.id])
-                dismiss()
-            }
-        }
+        .pageList()
     }
 }
