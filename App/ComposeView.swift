@@ -12,16 +12,12 @@ struct ComposeView: View {
 
     var body: some View {
         Page(title: "Campfire") {
-            NavigationLink {
-                HistoryView()
-            } label: {
+            NavigationLink(value: Screen.sent) {
                 Image(systemName: "archivebox")
             }
             .accessibilityLabel("Sent")
 
-            NavigationLink {
-                SettingsView()
-            } label: {
+            NavigationLink(value: Screen.settings) {
                 Image(systemName: "gearshape")
             }
             .accessibilityLabel("Settings")

@@ -6,6 +6,7 @@ import SwiftUI
 ///
 /// Every screen uses it, including ones pushed from another screen. It hides iOS's own top bar,
 /// and a screen that skips it gets that bar back, looking out of place.
+/// Screens are opened through `Screen` (App/Screen.swift), never `NavigationLink { SomeView() }`.
 struct Page<Actions: View, Content: View>: View {
     let title: String
     var showsBack = false

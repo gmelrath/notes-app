@@ -1,26 +1,31 @@
 import SwiftUI
 
+/// One entry from Sent. It's looked up by ID in the shared history each time, so it always shows the
+/// current version (after Try again, or a sync from the other device), and closes if it's deleted.
 struct CaptureDetailView: View {
-    @State var capture: Capture
-    @ObservedObject var model: HistoryModel
+    let id: Capture.ID
+    @EnvironmentObject private var model: HistoryModel
     @State private var isRetrying = false
     @State private var confirmDelete = false
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
 
+    private var capture: Capture? { model.captures.first { $0.id == id } }
+
     var body: some View {
         Page("Details", showsBack: true) {
-            details
+            if let capture { details(capture) }
         }
         .confirmationDialog("Delete from history?", isPresented: $confirmDelete, titleVisibility: .visible) {
-            Button("Delete", role: .destructive) {
-                model.delete([capture.id])
-                dismiss()
-            }
+            // Closing happens below, once the entry is gone.
+            Button("Delete", role: .destructive) { model.delete([id]) }
+        }
+        .onChange(of: capture == nil) { _, isGone in
+            if isGone { dismiss() }
         }
     }
 
-    private var details: some View {
+    private func details(_ capture: Capture) -> some View {
         List {
             Section {
                 VStack(alignment: .leading, spacing: 8) {
@@ -61,7 +66,7 @@ struct CaptureDetailView: View {
                         Button {
                             Task {
                                 isRetrying = true
-                                capture = await model.retry(capture)
+                                _ = await model.retry(capture)
                                 isRetrying = false
                             }
                         } label: {

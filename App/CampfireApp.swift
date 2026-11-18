@@ -5,12 +5,16 @@ struct CampfireApp: App {
     @UIApplicationDelegateAdaptor private var appDelegate: AppDelegate
     @Environment(\.scenePhase) private var scenePhase
     @State private var isLandscape = false
+    /// The history, shared by Sent and Details so both always show the same entries.
+    @StateObject private var history = HistoryModel()
 
     var body: some Scene {
         WindowGroup {
             NavigationStack {
                 ComposeView()
+                    .navigationDestination(for: Screen.self) { $0.view }
             }
+            .environmentObject(history)
             // Measured on the whole window, which the keyboard doesn't resize; screens deeper in it shrink.
             .onGeometryChange(for: Bool.self) { $0.size.width > $0.size.height } action: { isLandscape = $0 }
             .environment(\.isLandscape, isLandscape)
