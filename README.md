@@ -41,9 +41,16 @@ The app and the share card share storage through the App Group `group.com.gregme
 
 ## App icon
 
-The icon artwork is `Design/icon-source.png`. To change it, replace that file and run `swift Design/make-icon.swift` from the repo root. The script resizes it to 1024 × 1024 on a white background and writes it to `Shared/Assets.xcassets/AppIcon.appiconset`. iOS makes the dark and tinted Home Screen versions itself.
+The icon is Sneaky the fox, drawn in `Design/icon.svg` (the "full-box-v2" artwork). The app icon itself is `App/AppIcon.icon`, an Icon Composer file you can open in Icon Composer (it comes with Xcode). It has two parts:
 
-Buttons and links use the `AccentColor` in the same asset catalog, an ember orange taken from the icon.
+- **Background:** the navy, a colour set in `AppIcon.icon/icon.json`.
+- **Fox and box:** `AppIcon.icon/Assets/fox.png`, cut from the SVG with its background left out.
+
+iOS 26 and later draw the Default, Dark, Tinted and Clear Home Screen looks from those, with the Liquid Glass edge. Xcode makes the plain images iOS 18 needs from the same file.
+
+To change the artwork, replace `Design/icon.svg` and run `swift Design/make-icon.swift` from the repo root to remake `fox.png`. The script removes the background by leaving out the full-size rectangle the SVG draws first, so a new SVG needs to start the same way. If the background colour changes, update it in Icon Composer too.
+
+Buttons and links use the `AccentColor` in `Shared/Assets.xcassets`.
 
 ## iCloud sync
 
