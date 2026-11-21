@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "CA0000000000000000000010"
-               BuildableName = "Campfire.app"
-               BlueprintName = "Campfire"
-               ReferencedContainer = "container:Campfire.xcodeproj">
+               BuildableName = "Stowaway.app"
+               BlueprintName = "Stowaway"
+               ReferencedContainer = "container:Stowaway.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -34,9 +34,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "CA0000000000000000000012"
-               BuildableName = "CampfireTests.xctest"
-               BlueprintName = "CampfireTests"
-               ReferencedContainer = "container:Campfire.xcodeproj">
+               BuildableName = "StowawayTests.xctest"
+               BlueprintName = "StowawayTests"
+               ReferencedContainer = "container:Stowaway.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -56,9 +56,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "CA0000000000000000000010"
-            BuildableName = "Campfire.app"
-            BlueprintName = "Campfire"
-            ReferencedContainer = "container:Campfire.xcodeproj">
+            BuildableName = "Stowaway.app"
+            BlueprintName = "Stowaway"
+            ReferencedContainer = "container:Stowaway.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -73,9 +73,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "CA0000000000000000000010"
-            BuildableName = "Campfire.app"
-            BlueprintName = "Campfire"
-            ReferencedContainer = "container:Campfire.xcodeproj">
+            BuildableName = "Stowaway.app"
+            BlueprintName = "Stowaway"
+            ReferencedContainer = "container:Stowaway.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

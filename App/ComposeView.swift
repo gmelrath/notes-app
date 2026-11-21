@@ -11,7 +11,7 @@ struct ComposeView: View {
     private enum Field { case link, title, note }
 
     var body: some View {
-        Page(title: "Campfire") {
+        Page(title: "Stowaway") {
             NavigationLink(value: Screen.sent) {
                 Image(systemName: "archivebox")
             }

@@ -65,7 +65,7 @@ struct SettingsView: View {
             } header: {
                 Text("Page titles")
             } footer: {
-                Text("The font for the Campfire, Sent and Settings titles.")
+                Text("The font for the Stowaway, Sent and Settings titles.")
             }
         }
         .pageList()

@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import Campfire
+@testable import Stowaway
 
 @Suite("Finding links")
 struct WebLinkTests {

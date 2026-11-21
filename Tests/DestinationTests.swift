@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 import Testing
-@testable import Campfire
+@testable import Stowaway
 
 @Suite("Destination rules")
 struct DestinationTests {

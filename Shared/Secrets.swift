@@ -6,7 +6,8 @@ import Security
 /// through a Keychain group, and carried to your other devices by iCloud Keychain.
 enum Secrets {
     /// The Keychain's name for the app's keys. Like the key names below, it must never change
-    /// (see StoredNames.swift), or the saved keys can't be found.
+    /// (see StoredNames.swift), or the saved keys can't be found. It keeps the app's old name,
+    /// Campfire, on purpose.
     static let service = "Campfire keys"
 
     enum Key: String, CaseIterable {

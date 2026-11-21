@@ -113,7 +113,7 @@ struct CaptureDetailView: View {
                     confirmDelete = true
                 }
             } footer: {
-                Text("This removes it from Campfire on all your devices. Anything already in Notion or your inbox stays there.")
+                Text("This removes it from Stowaway on all your devices. Anything already in Notion or your inbox stays there.")
             }
         }
         .pageList()

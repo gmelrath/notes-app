@@ -8,6 +8,8 @@ import Foundation
 actor CloudHistory {
     static let shared = CloudHistory()
 
+    /// Keeps the app's old name, Campfire, on purpose: the synced history lives in this container,
+    /// and a renamed one would start empty. It must match the iCloud entry in both entitlements files.
     private let container = CKContainer(identifier: "iCloud.com.gregmelrath.Campfire")
     private let zoneID = CKRecordZone.ID(zoneName: CloudName.zone)
     private var isSyncing = false
@@ -131,7 +133,7 @@ actor CloudHistory {
                 } else if let capture = capture(from: modification.record) {
                     saved.append(capture)
                 } else if let payload = modification.record[CloudName.Capture.payload] as? Data {
-                    // Saved by a newer version of Campfire: kept in the file for when this one is updated.
+                    // Saved by a newer version of Stowaway: kept in the file for when this one is updated.
                     unreadable.append(payload)
                 }
             }
