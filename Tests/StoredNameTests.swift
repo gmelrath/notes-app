@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import Campfire
+@testable import Stowaway
 
 /// Every name and value the app has already saved on devices, in iCloud and in the Keychain.
 /// If one of these tests fails, a rename would make the app lose data stored under the old name:

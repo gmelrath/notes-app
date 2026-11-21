@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import Campfire
+@testable import Stowaway
 
 /// The duplicate warning compares links by their match key, so these must agree for the same page.
 @Suite("Duplicate matching")
