@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct CampfireApp: App {
+struct StowawayApp: App {
     @UIApplicationDelegateAdaptor private var appDelegate: AppDelegate
     @Environment(\.scenePhase) private var scenePhase
     @State private var isLandscape = false

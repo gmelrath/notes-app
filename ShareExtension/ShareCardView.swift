@@ -16,14 +16,14 @@ struct ShareCardView: View {
                     ContentUnavailableView(
                         "Nothing to capture",
                         systemImage: "tray",
-                        description: Text("Campfire couldn’t read what was shared.")
+                        description: Text("Stowaway couldn’t read what was shared.")
                     )
                 } else {
                     content
                 }
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("Campfire")
+            .navigationTitle("Stowaway")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -116,7 +116,7 @@ struct ShareCardView: View {
 
     private var actions: some View {
         SendButtonRow(canSend: model.canSend(to:), sending: model.sending, sent: model.sent,
-                      settings: "the Campfire app’s Settings") { destination in
+                      settings: "the Stowaway app’s Settings") { destination in
             focusedField = nil
             Task { await model.send(to: destination) }
         }

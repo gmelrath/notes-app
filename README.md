@@ -1,10 +1,10 @@
 # notes-app
 
-**Campfire** is a personal iPhone and iPad app for saving links, notes and files from the share sheet. Share a post or article, then send it to a Notion reading list or to your email inbox. Every capture is logged and synced between your devices through iCloud, so you can see whether you've already saved something.
+**Stowaway** is a personal iPhone and iPad app for saving links, notes and files from the share sheet. Share a post or article, then send it to a Notion reading list or to your email inbox. Every capture is logged and synced between your devices through iCloud, so you can see whether you've already saved something.
 
 ## What it does
 
-- **Share card:** tap Share in any app (Safari, X, LinkedIn…), then **Campfire**. The card shows the page title (editable), an optional note, and **Notion** / **Email** buttons.
+- **Share card:** tap Share in any app (Safari, X, LinkedIn…), then **Stowaway**. The card shows the page title (editable), an optional note, and **Notion** / **Email** buttons.
 - **Duplicate warning:** if you've captured a link before, on either device, the card says when and where it went. Tracking codes like `utm_*` are ignored when comparing links.
 - **Write a note:** the app opens on a compose screen. Type a note, and optionally add a link with **Paste**, then send it to Notion or email. Without a link, the note's first line becomes the title.
 - **Sent:** the archive-box button lists every capture with search, a detail view, swipe to delete, and retry for failed sends.
@@ -22,6 +22,7 @@
 | 5 | Paid developer account, renamed to Campfire | Done |
 | 6 | iPad support, history shared between devices through iCloud | Done |
 | 7 | App icon and accent colour; real-world testing continues | Done |
+| — | Renamed to Stowaway (NMB-31). The Keychain name and iCloud container keep "Campfire" so saved keys and history carry over. | Done |
 
 ## Project layout
 
@@ -34,7 +35,7 @@ Design/          Source artwork for the app icon, and the script that prepares i
 Tests/           Automated tests of the shared logic (see Tests below)
 ```
 
-**Adding a screen:** build it on `Page` (in `App/Page.swift`), as Campfire, Sent, Details and Settings do. It draws the shared header inside the iPad content column, hides iOS's own top bar, and turns swiping back from the left edge on for that screen. Then add it to `Screen` (in `App/Screen.swift`) and open it with `NavigationLink(value: Screen.…)`. Never use `NavigationLink { SomeView() }`: mixing the two kinds of link makes SwiftUI push screens twice.
+**Adding a screen:** build it on `Page` (in `App/Page.swift`), as Stowaway, Sent, Details and Settings do. It draws the shared header inside the iPad content column, hides iOS's own top bar, and turns swiping back from the left edge on for that screen. Then add it to `Screen` (in `App/Screen.swift`) and open it with `NavigationLink(value: Screen.…)`. Never use `NavigationLink { SomeView() }`: mixing the two kinds of link makes SwiftUI push screens twice.
 
 The app and the share card share storage through the App Group `group.com.gregmelrath.Capture`. The app was first called Capture, and its bundle IDs and App Group keep that name so the history already on the phone carries over.
 
@@ -57,8 +58,8 @@ The history is mirrored to the private iCloud database of the container `iCloud.
 
 You need Xcode and an Apple Developer Program membership, which keeps the app working for a year between installs. A free Apple ID also works, but the app then stops opening after 7 days and has to be reinstalled.
 
-1. Open `Campfire.xcodeproj`.
-2. For both the **Campfire** and **ShareExtension** targets, go to **Signing & Capabilities** and choose your team.
+1. Open `Stowaway.xcodeproj`.
+2. For both the **Stowaway** and **ShareExtension** targets, go to **Signing & Capabilities** and choose your team.
 3. Plug your iPhone directly into the Mac (not through a hub), and turn on **Settings → Privacy & Security → Developer Mode**.
 4. Choose your iPhone as the run destination and press **▶ Run**.
 5. The first time, trust the developer on the phone: **Settings → General → VPN & Device Management**.
@@ -70,7 +71,7 @@ The `Tests` folder holds automated tests of the app's core logic: duplicate matc
 Run them with **⌘U** in Xcode, or:
 
 ```bash
-xcodebuild test -project Campfire.xcodeproj -scheme Campfire -destination 'platform=iOS Simulator,name=iPhone 17'
+xcodebuild test -project Stowaway.xcodeproj -scheme Stowaway -destination 'platform=iOS Simulator,name=iPhone 17'
 ```
 
 Anything that needs the internet or a real account (sending to Notion or Resend, Apple's link previews, iCloud) is still checked by hand on a device.
@@ -81,10 +82,10 @@ The Notion and Resend keys are never part of the app or this repository. Paste t
 
 ### Notion
 
-1. At [notion.so/profile/integrations](https://www.notion.so/profile/integrations), create an **internal** integration (API token) called Campfire, and paste its secret into **Settings → Keys → Notion key**.
-2. In Notion, open the page that contains the database, then go to **••• → Connections** and add **Campfire**.
+1. At [notion.so/profile/integrations](https://www.notion.so/profile/integrations), create an **internal** integration (API token) called Stowaway, and paste its secret into **Settings → Keys → Notion key**.
+2. In Notion, open the page that contains the database, then go to **••• → Connections** and add **Stowaway**.
 
-The target database is set by `NOTION_DATA_SOURCE_ID` in `Config/Campfire.xcconfig`. Each capture becomes a row with:
+The target database is set by `NOTION_DATA_SOURCE_ID` in `Config/Stowaway.xcconfig`. Each capture becomes a row with:
 
 | Column | Value |
 |---|---|

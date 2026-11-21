@@ -79,7 +79,7 @@ struct Capture: Codable, Identifiable, Hashable {
 }
 
 extension Capture {
-    /// Reads an entry saved by any version of Campfire. Only the ID and destination are required;
+    /// Reads an entry saved by any version of Stowaway. Only the ID and destination are required;
     /// anything else missing gets a default. When adding a field, read it with `decodeIfPresent`
     /// and a default here, so entries saved before it existed still load.
     init(from decoder: Decoder) throws {

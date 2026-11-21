@@ -1,7 +1,7 @@
 import Foundation
 
 /// Adds a row to the "Things to Read…" database using Notion's API.
-/// The key is in the Keychain (see Secrets); the database comes from Config/Campfire.xcconfig.
+/// The key is in the Keychain (see Secrets); the database comes from Config/Stowaway.xcconfig.
 enum NotionClient {
     enum NotionError: LocalizedError {
         case missingKey
@@ -13,7 +13,7 @@ enum NotionClient {
             switch self {
             case .missingKey: "Notion isn't set up yet. Add your Notion key in Settings."
             case .unauthorized: "Notion didn't accept the key. Check your Notion key in Settings."
-            case .databaseNotShared: "Campfire can’t see your Notion database. In Notion, add the Campfire connection to Things to Read…"
+            case .databaseNotShared: "Stowaway can’t see your Notion database. In Notion, add the Stowaway connection to Things to Read…"
             case .rejected(let message): "Notion said: \(message)"
             }
         }

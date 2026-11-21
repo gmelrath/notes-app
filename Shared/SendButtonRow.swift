@@ -44,7 +44,7 @@ struct SendButtonRow: View {
             }
             .frame(maxWidth: .infinity)
         }
-        .buttonStyle(SendButtonStyle(tint: sent == destination ? .green : .campfireOrange))
+        .buttonStyle(SendButtonStyle(tint: sent == destination ? .green : .brandOrange))
         .disabled(!canSend(destination) && sent != destination)
         .keyboardShortcut(.return, modifiers: destination.shortcutModifiers)
     }

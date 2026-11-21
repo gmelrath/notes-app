@@ -5,13 +5,13 @@ extension Color {
     /// buttons and, as the accent, for icons, links and controls. Read by name rather than as
     /// `Color.accentColor`, because the share card runs inside another app's window and would get
     /// that app's accent (often the system blue) instead of ours.
-    static let campfireOrange = Color("AccentColor")
+    static let brandOrange = Color("AccentColor")
 }
 
 /// The Notion and Email buttons: orange when ready, a lighter orange while pressed, and a gray
 /// a shade darker than the background while there's nothing to send.
 struct SendButtonStyle: ButtonStyle {
-    var tint: Color = .campfireOrange
+    var tint: Color = .brandOrange
     @Environment(\.isEnabled) private var isEnabled
 
     func makeBody(configuration: Configuration) -> some View {

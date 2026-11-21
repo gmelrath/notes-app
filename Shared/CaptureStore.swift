@@ -27,7 +27,7 @@ enum CaptureStore {
 
     /// Applies changes from other devices. Entries with local changes still waiting to upload are
     /// left alone, so they aren't overwritten by an older copy. `unreadable` are entries from a newer
-    /// version of Campfire; they're kept for when this one is updated. Returns whether anything changed.
+    /// version of Stowaway; they're kept for when this one is updated. Returns whether anything changed.
     static func merge(saved: [Capture], unreadable: [Data] = [], deleted: Set<Capture.ID>, keeping pending: Set<Capture.ID>) -> Bool {
         guard !saved.isEmpty || !unreadable.isEmpty || !deleted.isEmpty else { return false }
         var changed = false
@@ -98,7 +98,7 @@ enum CaptureStore {
 }
 
 /// What's in the history file. Each entry is read on its own, so one this version can't read
-/// (saved by a newer version of Campfire, say) doesn't take the others with it. Such entries are
+/// (saved by a newer version of Stowaway, say) doesn't take the others with it. Such entries are
 /// kept exactly as they are and written back, so they aren't lost either. Likewise, fields a newer
 /// version added to an entry this version can read are carried over when it's written back.
 struct HistoryFile {
